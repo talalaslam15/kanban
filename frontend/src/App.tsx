@@ -1,0 +1,23 @@
+import { List } from "./types";
+import { defaultData } from "./data";
+import { Column } from "./Column";
+import { useState } from "react";
+
+function App() {
+  const [lists, setLists] = useState<List[]>(defaultData);
+  return (
+    <div className="bg-gray-950 min-h-screen p-8">
+      <h1 className="text-3xl font-bold text-gray-100 mb-8 ">
+        My Kanban Board
+      </h1>
+
+      <div className="flex gap-6 overflow-x-auto pb-4">
+        {lists.map((list) => (
+          <Column key={list.id} list={list} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default App;
