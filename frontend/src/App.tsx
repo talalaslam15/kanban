@@ -13,7 +13,7 @@ function App() {
 
       <div className="flex gap-6 overflow-x-auto pb-4">
         {lists.map((list) => (
-          <Column key={list.id} list={list} />
+          <Column key={list.id} list={list} setLists={setLists} />
         ))}
       </div>
     </div>
