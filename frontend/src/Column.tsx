@@ -9,7 +9,7 @@ import invariant from "tiny-invariant";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { CardComponent } from "./Card";
 
-export const Column = ({ list }: { list: List }) => {
+export const Column = ({ list, setLists }: { list: List; setLists: any }) => {
   const ref = React.useRef<HTMLDivElement>(null);
   const [isDraggedOver, setIsDraggedOver] = React.useState(false);
 
@@ -94,7 +94,12 @@ export const Column = ({ list }: { list: List }) => {
       {/* Cards container */}
       <div className="p-3 flex-grow overflow-y-auto max-h-[calc(100vh-200px)]">
         {list.cards.map((card) => (
-          <CardComponent key={card.id} card={card} list={list} />
+          <CardComponent
+            key={card.id}
+            card={card}
+            list={list}
+            setLists={setLists}
+          />
         ))}
       </div>
 
