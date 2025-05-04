@@ -30,11 +30,16 @@ type CardState =
       closestEdge: Edge | null;
     };
 
-export const CardComponent = ({ card, list }: { card: Card; list: List }) => {
+type CardProps = {
+  card: Card;
+  list: List;
+  setLists: React.Dispatch<React.SetStateAction<List[]>>;
+};
+
+export const CardComponent = ({ card, list, setLists }: CardProps) => {
   const ref = React.useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const [state, setState] = React.useState<CardState>(idle);
-  console.log("CardComponent", state);
 
   React.useEffect(() => {
     const element = ref.current;
@@ -60,13 +65,17 @@ export const CardComponent = ({ card, list }: { card: Card; list: List }) => {
           if (source.element === element) {
             return false;
           }
+          // not allowing dropping lists on cards
+          if (source.data.list) {
+            return false;
+          }
           // only allowing tasks to be dropped on me
           return true;
         },
         getData({ input }) {
-          const data = element;
+          // const data = element;
           return attachClosestEdge(
-            { data },
+            { data: { card, list } },
             {
               element,
               input,
@@ -75,16 +84,11 @@ export const CardComponent = ({ card, list }: { card: Card; list: List }) => {
           );
         },
         getIsSticky() {
-          return false;
+          return true;
         },
-        // onDragEnter({ self }) {
-        //   const closestEdge = extractClosestEdge(self.data);
-        //   setState({ type: "is-dragging-over", closestEdge });
-        // },
         onDrag({ self }) {
           const closestEdge = extractClosestEdge(self.data);
 
-          // Only need to update react state if nothing has changed.
           // Prevents re-rendering.
           setState((current) => {
             if (
@@ -97,11 +101,55 @@ export const CardComponent = ({ card, list }: { card: Card; list: List }) => {
           });
         },
         onDragLeave() {
-          console.log("leave");
           setState(idle);
         },
-        onDrop() {
-          console.log("drop");
+        onDrop({ self, source }) {
+          const sourceCardId = source.data.card.id;
+          const sourceListId = source.data.listId;
+          const targetCard = self.data.data.card.id;
+          const targetListId = self.data.data.list.id;
+          const closestEdge = extractClosestEdge(self.data);
+
+          setLists((prevLists) => {
+            // Create a deep copy of the lists
+            const newLists = JSON.parse(JSON.stringify(prevLists));
+
+            // Find the source and target lists
+            const sourceList = newLists.find(
+              (list) => list.id === sourceListId
+            );
+            const targetList = newLists.find(
+              (list) => list.id === targetListId
+            );
+
+            if (!sourceList || !targetList) return prevLists;
+
+            // Find the card to move
+            const cardToMove = sourceList.cards.find(
+              (card) => card.id === sourceCardId
+            );
+            if (!cardToMove) return prevLists;
+
+            // Remove the card from the source list
+            sourceList.cards = sourceList.cards.filter(
+              (card) => card.id !== sourceCardId
+            );
+
+            // Find the position of the target card in the target list
+            const targetCardIndex = targetList.cards.findIndex(
+              (card) => card.id === targetCard
+            );
+
+            // Insert the card at the appropriate position based on the edge
+            if (closestEdge === "bottom") {
+              targetList.cards.splice(targetCardIndex + 1, 0, cardToMove);
+            } else {
+              targetList.cards.splice(targetCardIndex, 0, cardToMove);
+            }
+
+            return newLists;
+          });
+
           setState(idle);
         },
       })
