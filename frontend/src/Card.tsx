@@ -13,6 +13,62 @@ import invariant from "tiny-invariant";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
 
+const privateCardSymbol = Symbol("Card");
+
+type DragCardData = {
+  [privateCardSymbol]: true;
+  card: Card;
+  listId: string;
+};
+
+function getCardData(
+  data: Omit<DragCardData, typeof privateCardSymbol>
+): DragCardData {
+  return {
+    [privateCardSymbol]: true,
+    ...data,
+  };
+}
+
+function isCardData(data: unknown): data is DragCardData {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    (data as Record<string | symbol, unknown>)[privateCardSymbol] === true
+  );
+}
+
+// Add this type definition after your other type definitions
+type CardDropTargetData = {
+  data: {
+    card: Card;
+    list: List;
+    listId: string;
+  };
+};
+
+// Add this type guard function with your other type guards
+function isCardDropTargetData(data: unknown): data is CardDropTargetData {
+  if (typeof data !== "object" || data === null) {
+    return false;
+  }
+
+  const candidate = data as Record<string, unknown>;
+
+  if (typeof candidate.data !== "object" || candidate.data === null) {
+    return false;
+  }
+
+  const nestedData = candidate.data as Record<string, unknown>;
+
+  return (
+    typeof nestedData.card === "object" &&
+    nestedData.card !== null &&
+    typeof nestedData.list === "object" &&
+    nestedData.list !== null &&
+    typeof nestedData.listId === "string"
+  );
+}
 const idle: CardState = { type: "idle" };
 type CardState =
   | {
@@ -47,10 +103,11 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
     return combine(
       draggable({
         element,
-        getInitialData: () => ({
-          card,
-          listId: list.id,
-        }),
+        getInitialData: () =>
+          getCardData({
+            card,
+            listId: list.id,
+          }),
         onDragStart: () => {
           setIsDragging(true);
         },
@@ -75,7 +132,7 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
         getData({ input }) {
           // const data = element;
           return attachClosestEdge(
-            { data: { card, list } },
+            { data: { card, list, listId: list.id } },
             {
               element,
               input,
@@ -104,6 +161,14 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
           setState(idle);
         },
         onDrop({ self, source }) {
+          if (!isCardData(source.data)) {
+            return;
+          }
+
+          if (!isCardDropTargetData(self.data)) {
+            return;
+          }
+
           const sourceCardId = source.data.card.id;
           const sourceListId = source.data.listId;
           const targetCard = self.data.data.card.id;
@@ -112,7 +177,7 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
 
           setLists((prevLists) => {
             // Create a deep copy of the lists
-            const newLists = JSON.parse(JSON.stringify(prevLists));
+            const newLists: List[] = JSON.parse(JSON.stringify(prevLists));
 
             // Find the source and target lists
             const sourceList = newLists.find(
@@ -154,7 +219,8 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
         },
       })
     );
-  }, [card, list.id]);
+  }, [card, list, list.id, setLists]);
+
   return (
     <div className="relative">
       <div
@@ -174,6 +240,7 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
           </div>
         </div>
       </div>
+      {/* Drop indicator for dragging over */}
       {state.type === "is-dragging-over" && state.closestEdge ? (
         <DropIndicator edge={state.closestEdge} gap="12px" />
       ) : null}
