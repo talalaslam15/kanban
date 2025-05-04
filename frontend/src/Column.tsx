@@ -2,14 +2,19 @@ import React from "react";
 import { type List } from "./types";
 import {
   draggable,
-  // dropTargetForElements,
+  dropTargetForElements,
   // monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { CardComponent } from "./Card";
 
-export const Column = ({ list, setLists }: { list: List; setLists: any }) => {
+type P = {
+  list: List;
+  setLists: React.Dispatch<React.SetStateAction<List[]>>;
+};
+
+export const Column = ({ list, setLists }: P) => {
   const ref = React.useRef<HTMLDivElement>(null);
   const [isDraggedOver, setIsDraggedOver] = React.useState(false);
 
@@ -23,31 +28,35 @@ export const Column = ({ list, setLists }: { list: List; setLists: any }) => {
           list,
           listId: list.id,
         }),
-      })
-      // dropTargetForElements({
-      //   element,
-      //   getData: () => ({ list }),
-      //   onDragEnter: () => {
-      //     setIsDraggedOver(true);
-      //   },
-      //   onDragStart: () => {
-      //     setIsDraggedOver(true);
-      //   },
-      //   onDragLeave: () => {
-      //     setIsDraggedOver(false);
-      //   },
+      }),
+      dropTargetForElements({
+        element,
+        canDrop: ({ source }) => {
+          if (source.data.list) {
+            return false;
+          }
+          if (source.data.card) {
+            return true;
+          }
+          return false;
+        },
+        getData: () => ({ list }),
+        onDragEnter: () => {
+          setIsDraggedOver(true);
+        },
+        onDragStart: () => {
+          setIsDraggedOver(true);
+        },
+        onDragLeave: () => {
+          setIsDraggedOver(false);
+        },
 
-      //   onDrop: ({ location, self, source }: any) => {
-      //     const card = source.data.card.id;
-      //     setIsDraggedOver(false);
-      //     console.log("location", location);
-      //     console.log("self", self);
-      //     console.log("source", source);
-      //     console.log("card", card);
-      //   },
-      // })
+        onDrop: () => {
+          setIsDraggedOver(false);
+        },
+      })
     );
-  }, []);
+  }, [list]);
 
   // React.useEffect(() => {
   //   const element = ref.current;
@@ -92,7 +101,7 @@ export const Column = ({ list, setLists }: { list: List; setLists: any }) => {
       </div>
 
       {/* Cards container */}
-      <div className="p-3 flex-grow overflow-y-auto max-h-[calc(100vh-200px)]">
+      <div className="p-3 flex-grow overflow-y-auto ">
         {list.cards.map((card) => (
           <CardComponent
             key={card.id}
