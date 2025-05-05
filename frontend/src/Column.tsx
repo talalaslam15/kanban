@@ -8,6 +8,10 @@ import {
 import invariant from "tiny-invariant";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { CardComponent } from "./Card";
+import {
+  attachClosestEdge,
+  extractClosestEdge,
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 
 type P = {
   list: List;
@@ -40,7 +44,16 @@ export const Column = ({ list, setLists }: P) => {
           }
           return false;
         },
-        getData: () => ({ list }),
+        getData: ({ input }) => {
+          return attachClosestEdge(
+            { data: { list, listId: list.id } },
+            {
+              element,
+              input,
+              allowedEdges: ["top", "bottom"],
+            }
+          );
+        },
         onDragEnter: () => {
           setIsDraggedOver(true);
         },
@@ -50,13 +63,52 @@ export const Column = ({ list, setLists }: P) => {
         onDragLeave: () => {
           setIsDraggedOver(false);
         },
-
-        onDrop: () => {
+        onDrop: ({ self, source }) => {
           setIsDraggedOver(false);
+
+          console.log("source", source);
+          console.log("self", self);
+
+          const sourceCardId = source.data.card.id;
+          const sourceListId = source.data.listId;
+          const targetListId = self.data.data.listId;
+          const closestEdge = extractClosestEdge(self.data);
+
+          // We already have the card object in source.data.card
+          const cardToMove = source.data.card;
+
+          setLists((prevLists) => {
+            // Create a deep copy of the lists
+            const newLists: List[] = JSON.parse(JSON.stringify(prevLists));
+
+            // Find the source and target lists
+            const sourceList = newLists.find(
+              (list) => list.id === sourceListId
+            );
+            const targetList = newLists.find(
+              (list) => list.id === targetListId
+            );
+
+            if (!sourceList || !targetList) return prevLists;
+
+            // Remove the card from the source list
+            sourceList.cards = sourceList.cards.filter(
+              (card) => card.id !== sourceCardId
+            );
+
+            // Insert the card at the appropriate position based on the edge
+            if (closestEdge === "bottom") {
+              targetList.cards.push(cardToMove);
+            } else {
+              targetList.cards.unshift(cardToMove);
+            }
+
+            return newLists;
+          });
         },
       })
     );
-  }, [list]);
+  }, [list, setLists]);
 
   // React.useEffect(() => {
   //   const element = ref.current;
