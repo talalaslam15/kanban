@@ -1,5 +1,5 @@
 import React from "react";
-import { type List } from "./types";
+import { Card, type List } from "./types";
 import {
   draggable,
   dropTargetForElements,
@@ -12,6 +12,46 @@ import {
   attachClosestEdge,
   extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+
+function isCardData(data: unknown): data is { card: Card; listId: string } {
+  if (typeof data !== "object" || data === null) {
+    return false;
+  }
+
+  const candidate = data as Record<string, unknown>;
+
+  return (
+    typeof candidate.card === "object" &&
+    candidate.card !== null &&
+    typeof candidate.listId === "string"
+  );
+}
+type ColumnDropTargetData = {
+  data: {
+    list: List;
+    listId: string;
+  };
+};
+
+function isColumnDropTargetData(data: unknown): data is ColumnDropTargetData {
+  if (typeof data !== "object" || data === null) {
+    return false;
+  }
+
+  const candidate = data as Record<string, unknown>;
+
+  if (typeof candidate.data !== "object" || candidate.data === null) {
+    return false;
+  }
+
+  const nestedData = candidate.data as Record<string, unknown>;
+
+  return (
+    typeof nestedData.list === "object" &&
+    nestedData.list !== null &&
+    typeof nestedData.listId === "string"
+  );
+}
 
 type P = {
   list: List;
@@ -69,6 +109,15 @@ export const Column = ({ list, setLists }: P) => {
           // dont do anything if there are 2 droptargets, Drop operation will be handled by the Card onDrop
           if (location.current.dropTargets.length === 2) return;
 
+          // Add these type checks
+          if (!isCardData(source.data)) {
+            return;
+          }
+
+          if (!isColumnDropTargetData(self.data)) {
+            return;
+          }
+
           const sourceCardId = source.data.card.id;
           const sourceListId = source.data.listId;
           const targetListId = self.data.data.listId;
@@ -110,35 +159,10 @@ export const Column = ({ list, setLists }: P) => {
     );
   }, [list, setLists]);
 
-  // React.useEffect(() => {
-  //   const element = ref.current;
-  //   invariant(element, "Element is missing");
-  //   const monitorConfig = {
-  //     element,
-  //     onDrag: ({ location }) => {
-  //       const target = location.current.dropTargets[0];
-  //       // console.log("target", target);
-
-  //       if (!target) {
-  //         return;
-  //       }
-  //       if (target.data.columnId === list.id) {
-  //         setIsDraggedOver(true);
-  //       } else {
-  //         setIsDraggedOver(false);
-  //       }
-  //     },
-  //     onDrop() {
-  //       setIsDraggedOver(false);
-  //     },
-  //   };
-  //   return monitorForElements(monitorConfig);
-  // }, [list.id]);
-
   return (
     <div
       ref={ref}
-      className={`m-2 bg-cyan-900 rounded-lg w-80 flex-shrink-0 flex flex-col ${
+      className={`m-2 bg-cyan-900 rounded-lg w-80 h-fit ${
         isDraggedOver ? "outline-2 outline-blue-500 bg-teal-900" : ""
       }`}
     >
@@ -151,9 +175,19 @@ export const Column = ({ list, setLists }: P) => {
           </span>
         </h2>
       </div>
+      {list.cards.length === 0 && (
+        <div className="p-4 mx-3 my-2 border-2 border-dashed border-gray-400 rounded-md bg-cyan-800 bg-opacity-40">
+          <div className="flex flex-col items-center text-center gap-2">
+            <p className="text-gray-200 text-sm font-medium">No cards yet</p>
+            <p className="text-gray-300 text-xs opacity-80">
+              Drag cards here or add a new card below
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Cards container */}
-      <div className="p-3 flex-grow overflow-y-auto ">
+      <div className="p-3">
         {list.cards.map((card) => (
           <CardComponent
             key={card.id}
@@ -163,7 +197,6 @@ export const Column = ({ list, setLists }: P) => {
           />
         ))}
       </div>
-
       {/* Add card button */}
       <div className="p-3 border-t border-gray-300">
         <button className="w-full py-1.5 bg-gray-50 text-gray-500 text-sm hover:bg-gray-300 rounded flex items-center justify-center transition-colors duration-200">
