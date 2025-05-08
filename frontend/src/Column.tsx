@@ -63,11 +63,11 @@ export const Column = ({ list, setLists }: P) => {
         onDragLeave: () => {
           setIsDraggedOver(false);
         },
-        onDrop: ({ self, source }) => {
+        onDrop: ({ self, source, location }) => {
           setIsDraggedOver(false);
 
-          console.log("source", source);
-          console.log("self", self);
+          // dont do anything if there are 2 droptargets, Drop operation will be handled by the Card onDrop
+          if (location.current.dropTargets.length === 2) return;
 
           const sourceCardId = source.data.card.id;
           const sourceListId = source.data.listId;
