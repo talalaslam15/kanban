@@ -119,9 +119,9 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
         element,
         canDrop({ source }) {
           // not allowing dropping on yourself
-          if (source.element === element) {
-            return false;
-          }
+          // if (source.element === element) {
+          //   return false;
+          // }
           // not allowing dropping lists on cards
           if (source.data.list) {
             return false;
@@ -129,8 +129,11 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
           // only allowing tasks to be dropped on me
           return true;
         },
-        getData({ input }) {
+        getData({ input, element, source }) {
           // const data = element;
+          if (source.element === element) {
+            return { data: { card, list, listId: list.id } };
+          }
           return attachClosestEdge(
             { data: { card, list, listId: list.id } },
             {
@@ -161,6 +164,7 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
           setState(idle);
         },
         onDrop({ self, source }) {
+          setState(idle);
           if (!isCardData(source.data)) {
             return;
           }
@@ -174,6 +178,10 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
           const targetCard = self.data.data.card.id;
           const targetListId = self.data.data.list.id;
           const closestEdge = extractClosestEdge(self.data);
+
+          if (sourceCardId === targetCard) {
+            return;
+          }
 
           setLists((prevLists) => {
             // Create a deep copy of the lists
@@ -214,8 +222,6 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
 
             return newLists;
           });
-
-          setState(idle);
         },
       })
     );
