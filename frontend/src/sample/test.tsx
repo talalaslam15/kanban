@@ -12,7 +12,7 @@ import {
   useState,
 } from "react";
 
-// eslint-disable-next-line @atlaskit/ui-styling-standard/use-compiled -- Ignored via go/DSP-18766
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { css, jsx } from "@emotion/react";
 import memoizeOne from "memoize-one";
 import invariant from "tiny-invariant";
@@ -32,13 +32,13 @@ import {
   tree,
   type TreeItem as TreeItemType,
   treeStateReducer,
-} from "./data/tree";
+} from "./tree";
 import {
   DependencyContext,
   TreeContext,
   type TreeContextValue,
-} from "./pieces/tree-context";
-import TreeItem from "./pieces/tree-item";
+} from "./tree-context";
+import TreeItem from "./tree-item";
 
 const treeStyles = css({
   display: "flex",
@@ -87,7 +87,7 @@ export default function Tree() {
   const [{ registry, registerTreeItem }] = useState(createTreeItemRegistry);
 
   const { data, lastAction } = state;
-  let lastStateRef = useRef<TreeItemType[]>(data);
+  const lastStateRef = useRef<TreeItemType[]>(data);
   useEffect(() => {
     lastStateRef.current = data;
   }, [data]);
@@ -251,7 +251,6 @@ export default function Tree() {
 
   return (
     <TreeContext.Provider value={context}>
-      {/* eslint-disable-next-line @atlaskit/ui-styling-standard/enforce-style-prop -- Ignored via go/DSP-18766 */}
       <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
         <div css={treeStyles} id="tree" ref={ref}>
           {data.map((item, index, array) => {
