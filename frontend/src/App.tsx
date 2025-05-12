@@ -7,11 +7,9 @@ function App() {
   const [lists, setLists] = useState<List[]>(defaultData);
   return (
     <div className="bg-gray-950 min-h-screen p-8">
-      <h1 className="text-3xl font-bold text-gray-100 mb-8 ">
-        My Kanban Board
-      </h1>
+      <h1 className="text-3xl font-bold text-gray-100 mb-4">My Kanban Board</h1>
 
-      <div className="flex gap-6 overflow-x-auto pb-4">
+      <div className="pl-2 flex gap-2 overflow-x-auto pb-4">
         {lists.map((list) => (
           <Column key={list.id} list={list} setLists={setLists} />
         ))}

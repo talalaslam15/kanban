@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, type List } from "./types";
+import { Card, CardState, type List } from "./types";
 import {
   draggable,
   dropTargetForElements,
@@ -12,6 +12,7 @@ import {
   attachClosestEdge,
   extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
 
 function isCardData(data: unknown): data is { card: Card; listId: string } {
   if (typeof data !== "object" || data === null) {
@@ -58,9 +59,13 @@ type P = {
   setLists: React.Dispatch<React.SetStateAction<List[]>>;
 };
 
+const idle: CardState = { type: "idle" };
+
 export const Column = ({ list, setLists }: P) => {
   const ref = React.useRef<HTMLDivElement>(null);
   const [isDraggedOver, setIsDraggedOver] = React.useState(false);
+  const [state, setState] = React.useState<CardState>(idle);
+  const [isDragging, setIsDragging] = React.useState(false);
 
   React.useEffect(() => {
     const element = ref.current;
@@ -72,39 +77,120 @@ export const Column = ({ list, setLists }: P) => {
           list,
           listId: list.id,
         }),
+        onDragStart: () => {
+          setIsDragging(true);
+        },
+        onDrop: () => {
+          setIsDragging(false);
+        },
       }),
       dropTargetForElements({
         element,
         canDrop: ({ source }) => {
           if (source.data.list) {
-            return false;
+            return true;
           }
           if (source.data.card) {
             return true;
           }
           return false;
         },
+        getIsSticky: () => true,
         getData: ({ input }) => {
           return attachClosestEdge(
             { data: { list, listId: list.id } },
             {
               element,
               input,
-              allowedEdges: ["top", "bottom"],
+              allowedEdges: ["left", "right"],
             }
           );
         },
-        onDragEnter: () => {
-          setIsDraggedOver(true);
+        onDrag({ self, source }) {
+          if (source.data.card) {
+            return;
+          }
+          const closestEdge = extractClosestEdge(self.data);
+          // Prevents re-rendering.
+          setState((current) => {
+            if (
+              current.type === "is-dragging-over" &&
+              current.closestEdge === closestEdge
+            ) {
+              return current;
+            }
+            return { type: "is-dragging-over", closestEdge };
+          });
         },
-        onDragStart: () => {
-          setIsDraggedOver(true);
+
+        onDragEnter: ({ source }) => {
+          if (source.data.card) setIsDraggedOver(true);
+        },
+        onDragStart: ({ source }) => {
+          if (source.data.card) setIsDraggedOver(true);
         },
         onDragLeave: () => {
           setIsDraggedOver(false);
+          setState(idle);
         },
         onDrop: ({ self, source, location }) => {
           setIsDraggedOver(false);
+          setState(idle);
+
+          // handle reorder of lists
+          if (source.data.list) {
+            // Add type guard to check if list has an id property
+            if (
+              typeof source.data.list !== "object" ||
+              !source.data.list ||
+              !("id" in source.data.list)
+            ) {
+              return;
+            }
+            // Use type guard before accessing self.data.data
+            if (!isColumnDropTargetData(self.data)) {
+              return;
+            }
+
+            const sourceListId = source.data.list.id;
+            const targetListId = self.data.data.listId;
+            const closestEdge = extractClosestEdge(self.data);
+
+            if (sourceListId === targetListId) return;
+
+            setLists((prevLists) => {
+              // Create a deep copy of the lists
+              const newLists: List[] = JSON.parse(JSON.stringify(prevLists));
+
+              // Find the source and target lists
+              const sourceList = newLists.find(
+                (list) => list.id === sourceListId
+              );
+              const targetList = newLists.find(
+                (list) => list.id === targetListId
+              );
+
+              if (!sourceList || !targetList) return prevLists;
+
+              // Remove the list from the source list
+              newLists.splice(newLists.indexOf(sourceList), 1);
+
+              // Insert the list at the appropriate position based on the edge
+              if (closestEdge === "right") {
+                newLists.splice(
+                  newLists.indexOf(targetList) + 1,
+                  0,
+                  sourceList
+                );
+              } else {
+                newLists.splice(newLists.indexOf(targetList), 0, sourceList);
+              }
+              console.log("self.data.closestEdge", closestEdge);
+
+              return newLists;
+            });
+            return;
+          }
 
           // dont do anything if there are 2 droptargets, Drop operation will be handled by the Card onDrop
           if (location.current.dropTargets.length === 2) return;
@@ -162,9 +248,9 @@ export const Column = ({ list, setLists }: P) => {
   return (
     <div
       ref={ref}
-      className={`m-2 bg-cyan-900 rounded-lg w-80 h-fit ${
+      className={`m-2 bg-cyan-900 rounded-lg w-80 relative h-fit ${
         isDraggedOver ? "outline-2 outline-blue-500 bg-teal-900" : ""
-      }`}
+      } ${isDragging ? "opacity-50" : ""}`}
     >
       {/* List header */}
       <div className="p-3 bg-blue-900-300 rounded-t-lg">
@@ -217,6 +303,9 @@ export const Column = ({ list, setLists }: P) => {
           Add a card
         </button>
       </div>
+      {state.type === "is-dragging-over" && state.closestEdge ? (
+        <DropIndicator edge={state.closestEdge} gap="24px" />
+      ) : null}
     </div>
   );
 };

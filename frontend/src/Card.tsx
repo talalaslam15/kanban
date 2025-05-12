@@ -1,12 +1,11 @@
 import React from "react";
-import type { Card, List } from "./types";
+import type { Card, CardState, List } from "./types";
 import {
   draggable,
   dropTargetForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import {
   attachClosestEdge,
-  type Edge,
   extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import invariant from "tiny-invariant";
@@ -70,22 +69,6 @@ function isCardDropTargetData(data: unknown): data is CardDropTargetData {
   );
 }
 const idle: CardState = { type: "idle" };
-type CardState =
-  | {
-      type: "idle";
-    }
-  | {
-      type: "preview";
-      container: HTMLElement;
-    }
-  | {
-      type: "is-dragging";
-    }
-  | {
-      type: "is-dragging-over";
-      closestEdge: Edge | null;
-    };
-
 type CardProps = {
   card: Card;
   list: List;
