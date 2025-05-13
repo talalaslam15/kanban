@@ -96,13 +96,15 @@ export const Column = ({ list, setLists }: P) => {
           return false;
         },
         getIsSticky: () => true,
-        getData: ({ input }) => {
+        getData: ({ input, source }) => {
           return attachClosestEdge(
             { data: { list, listId: list.id } },
             {
               element,
               input,
-              allowedEdges: ["left", "right"],
+              allowedEdges: source.data.card
+                ? ["top", "bottom"]
+                : ["left", "right"],
             }
           );
         },
