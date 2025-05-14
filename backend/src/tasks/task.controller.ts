@@ -10,10 +10,13 @@ import {
   Patch,
   Param,
   Delete,
+  NotFoundException,
+  ValidationPipe,
 } from '@nestjs/common';
 import { TaskService } from './task.service';
-import { ApiOkResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiNotFoundResponse, ApiBody } from '@nestjs/swagger';
 import { TaskResponseDto } from './dto/task-response.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Controller('tasks')
 export class TaskController {
@@ -40,17 +43,57 @@ export class TaskController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.taskService.findOne(id);
+  @ApiOkResponse({
+    description: 'Task found',
+    type: TaskResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Task not found',
+  })
+  async findOne(@Param('id') id: string) {
+    const task = await this.taskService.findOne(id);
+    if (!task) {
+      throw new NotFoundException(`Task with id ${id} not found`);
+    }
+    return task;
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() data) {
-    return this.taskService.update(id, data);
+  @ApiOkResponse({
+    description: 'Task updated',
+    type: TaskResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Task not found',
+  })
+  @ApiBody({ type: UpdateTaskDto, description: 'Task data to update' })
+  async update(
+    @Param('id') id: string,
+    @Body(new ValidationPipe({ whitelist: true })) data: UpdateTaskDto,
+  ) {
+    const task = await this.taskService.findOne(id);
+    if (!task) {
+      throw new NotFoundException(`Task with id ${id} not found`);
+    }
+
+    const updateData = {
+      ...(data.title && { title: data.title }),
+      ...(data.description && { description: data.description }),
+      ...(data.columnId && { column: { connect: { id: data.columnId } } }),
+      ...(data.position !== undefined && { position: data.position }),
+    };
+
+    return this.taskService.update(id, updateData);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @ApiOkResponse({ description: 'Task deleted successfully' })
+  @ApiNotFoundResponse({ description: 'Task not found' })
+  async remove(@Param('id') id: string) {
+    const task = await this.taskService.findOne(id);
+    if (!task) {
+      throw new NotFoundException(`Task with id ${id} not found`);
+    }
     return this.taskService.remove(id);
   }
 }
