@@ -1,5 +1,10 @@
 import { type Edge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
 export interface List {
   id: string;
   title: string;
