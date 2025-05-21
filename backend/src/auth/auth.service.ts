@@ -1,0 +1,58 @@
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private prisma: PrismaService,
+    private jwt: JwtService,
+  ) {}
+
+  async register({
+    email,
+    password,
+    name,
+  }: {
+    email: string;
+    password: string;
+    name: string;
+  }) {
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) throw new ConflictException('Email already in use');
+
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        name,
+        password: hashed,
+        boards: {
+          create: {
+            title: 'My First Board',
+            description: 'This is your first board!',
+          },
+        },
+      },
+    });
+
+    const token = this.jwt.sign({ sub: user.id });
+    return { access_token: token };
+  }
+
+  async login({ email, password }: { email: string; password: string }) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new UnauthorizedException('Invalid credentials');
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) throw new UnauthorizedException('Invalid credentials');
+
+    const token = this.jwt.sign({ sub: user.id });
+    return { access_token: token };
+  }
+}
