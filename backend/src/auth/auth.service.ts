@@ -42,7 +42,10 @@ export class AuthService {
     });
 
     const token = this.jwt.sign({ sub: user.id });
-    return { access_token: token };
+    return {
+      access_token: token,
+      user: { id: user.id, email: user.email, name: user.name },
+    };
   }
 
   async login({ email, password }: { email: string; password: string }) {
