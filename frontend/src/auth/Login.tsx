@@ -19,7 +19,7 @@ export const Login = () => {
 
     try {
       await login(email, password);
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       if (axios.isAxiosError(err)) setError(err?.response?.data?.message);
       else setError("Failed to login");

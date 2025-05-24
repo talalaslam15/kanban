@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { User } from "../types";
+import { useNavigate } from "react-router";
 
 // Shape of our auth state
 interface AuthState {
@@ -22,11 +23,13 @@ interface AuthContextProps {
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 // API base URL
-const API_URL = "http://localhost:3000/api";
+const API_URL = "http://localhost:3000";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const navigate = useNavigate();
+
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     user: null,
@@ -46,11 +49,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         user: JSON.parse(user),
         loading: false,
       });
+      navigate("/");
 
       // Set default auth header
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     } else {
       setAuthState({ ...authState, loading: false });
+      navigate("/login");
     }
   }, []);
 
@@ -61,18 +66,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         email,
         password,
       });
-      const { token, user } = response.data;
+      const { access_token, user } = response.data;
 
       // Store token and user in localStorage
-      localStorage.setItem("token", token);
+      localStorage.setItem("token", access_token);
       localStorage.setItem("user", JSON.stringify(user));
 
       // Set default auth header
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      axios.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
 
       setAuthState({
         isAuthenticated: true,
-        token,
+        token: access_token,
         user,
         loading: false,
       });

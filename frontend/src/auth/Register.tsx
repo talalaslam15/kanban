@@ -27,7 +27,7 @@ export const Register = () => {
 
     try {
       await register(name, email, password);
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       if (axios.isAxiosError(err)) setError(err?.response?.data?.message);
       else setError("Failed to register");
