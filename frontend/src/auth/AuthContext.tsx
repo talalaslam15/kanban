@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import axios from "axios";
+import api from "./api";
 import { User } from "../types";
 import { useNavigate } from "react-router";
 
@@ -21,9 +21,6 @@ interface AuthContextProps {
 
 // Create the context
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
-
-// API base URL
-const API_URL = "http://localhost:3000";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -50,9 +47,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         loading: false,
       });
       navigate("/");
-
-      // Set default auth header
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     } else {
       setAuthState({ ...authState, loading: false });
       navigate("/login");
@@ -62,18 +56,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Login function
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/login`, {
+      const response = await api.post(`/auth/login`, {
         email,
         password,
       });
       const { access_token, user } = response.data;
 
       // Store token and user in localStorage
-      localStorage.setItem("token", access_token);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      // Set default auth header
-      axios.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+      if (access_token)
+        if (access_token) localStorage.setItem("token", access_token);
+      if (user) localStorage.setItem("user", JSON.stringify(user));
+      if (user) localStorage.setItem("user", JSON.stringify(user));
 
       setAuthState({
         isAuthenticated: true,
@@ -90,23 +83,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Register function
   const register = async (name: string, email: string, password: string) => {
     try {
-      const response = await axios.post(`${API_URL}/auth/register`, {
+      const response = await api.post(`/auth/register`, {
         name,
         email,
         password,
       });
-      const { token, user } = response.data;
+      const { access_token, user } = response.data;
 
       // Store token and user in localStorage
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      // Set default auth header
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      if (access_token) localStorage.setItem("token", access_token);
+      if (user) localStorage.setItem("user", JSON.stringify(user));
 
       setAuthState({
         isAuthenticated: true,
-        token,
+        token: access_token,
         user,
         loading: false,
       });
@@ -121,9 +111,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // Remove token and user from localStorage
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
-    // Remove auth header
-    delete axios.defaults.headers.common["Authorization"];
 
     setAuthState({
       isAuthenticated: false,

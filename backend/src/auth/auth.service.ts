@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from './jwt.payload';
 
 @Injectable()
 export class AuthService {
@@ -41,7 +42,12 @@ export class AuthService {
       },
     });
 
-    const token = this.jwt.sign({ sub: user.id });
+    const payload: JwtPayload = {
+      userId: user.id,
+      email: user.email,
+    };
+
+    const token = this.jwt.sign(payload);
     return {
       access_token: token,
       user: { id: user.id, email: user.email, name: user.name },
@@ -55,10 +61,28 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new UnauthorizedException('Invalid credentials');
 
-    const token = this.jwt.sign({ sub: user.id });
+    // const token = this.jwt.sign({ sub: user.id });
+    const payload: JwtPayload = {
+      userId: user.id,
+      email: user.email,
+    };
+    const token = this.jwt.sign(payload);
     return {
       access_token: token,
       user: { id: user.id, email: user.email, name: user.name },
     };
+  }
+
+  async getMe(userId: string) {
+    console.log('Fetching user with ID:', userId);
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+      },
+    });
   }
 }

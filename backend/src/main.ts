@@ -19,10 +19,15 @@ async function bootstrap() {
     .setTitle('Kanban API')
     .setDescription('Task management API')
     .setVersion('1.0')
+    .addBearerAuth() // This will add the "Authorize" button in Swagger UI
+
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
   await app.listen(3000);
 }
-bootstrap();
+
+bootstrap().catch((err) => {
+  console.error('Error during bootstrap:', err);
+});
