@@ -13,6 +13,16 @@ import {
   extractClosestEdge,
 } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
 import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./components/ui/dialog";
+import { Button } from "./components/ui/button";
+import api from "./auth/api";
 
 function isCardData(data: unknown): data is { card: Card; listId: string } {
   if (typeof data !== "object" || data === null) {
@@ -66,6 +76,13 @@ export const Column = ({ list, setLists }: P) => {
   const [isDraggedOver, setIsDraggedOver] = React.useState(false);
   const [state, setState] = React.useState<CardState>(idle);
   const [isDragging, setIsDragging] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [form, setForm] = React.useState({
+    title: "",
+    description: "",
+  });
+  const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState("");
 
   React.useEffect(() => {
     const element = ref.current;
@@ -247,6 +264,53 @@ export const Column = ({ list, setLists }: P) => {
     );
   }, [list, setLists]);
 
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleAddCard = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      const payload = {
+        title: form.title,
+        description: form.description,
+        columnId: list.id,
+        position: list.tasks.length,
+      };
+      const response = await api.post("/tasks", payload);
+      const newCard = response.data;
+      setLists((prev) =>
+        prev.map((l) =>
+          l.id === list.id ? { ...l, tasks: [...l.tasks, newCard] } : l
+        )
+      );
+      setForm({ title: "", description: "" });
+      setOpen(false);
+    } catch (err) {
+      if (
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        err.response &&
+        typeof err.response === "object" &&
+        "data" in err.response &&
+        err.response.data &&
+        typeof err.response.data === "object" &&
+        "message" in err.response.data
+      ) {
+        setError("Failed to add card");
+      } else {
+        setError("Failed to add card");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div
       ref={ref}
@@ -295,23 +359,76 @@ export const Column = ({ list, setLists }: P) => {
       </div>
       {/* Add card button */}
       <div className="p-3 border-t border-border">
-        <button className="w-full py-1.5 cursor-pointer bg-primary text-primary-foreground text-sm hover:bg-accent-foreground hover:text-accent rounded flex items-center justify-center transition-colors duration-200 hover:shadow-sm">
-          <svg
-            className="w-4 h-4 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-            />
-          </svg>
-          Add a card
-        </button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <button
+              type="button"
+              className="w-full py-1.5 cursor-pointer bg-primary text-primary-foreground text-sm hover:bg-accent-foreground hover:text-accent rounded flex items-center justify-center transition-colors duration-200 hover:shadow-sm"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Add a card
+            </button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add a new card</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleAddCard} className="space-y-4">
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1"
+                  htmlFor="title"
+                >
+                  Title
+                </label>
+                <input
+                  id="title"
+                  name="title"
+                  type="text"
+                  value={form.title}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 rounded border border-border bg-background text-foreground"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1"
+                  htmlFor="description"
+                >
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={form.description}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 rounded border border-border bg-background text-foreground"
+                  rows={3}
+                />
+              </div>
+              {error && <div className="text-red-500 text-sm">{error}</div>}
+              <DialogFooter>
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? "Adding..." : "Add Card"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
       {state.type === "is-dragging-over" && state.closestEdge ? (
         <DropIndicator edge={state.closestEdge} gap="24px" />
