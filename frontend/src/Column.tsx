@@ -229,15 +229,15 @@ export const Column = ({ list, setLists }: P) => {
             if (!sourceList || !targetList) return prevLists;
 
             // Remove the card from the source list
-            sourceList.cards = sourceList.cards.filter(
+            sourceList.tasks = sourceList.tasks.filter(
               (card) => card.id !== sourceCardId
             );
 
             // Insert the card at the appropriate position based on the edge
             if (closestEdge === "bottom") {
-              targetList.cards.push(cardToMove);
+              targetList.tasks.push(cardToMove);
             } else {
-              targetList.cards.unshift(cardToMove);
+              targetList.tasks.unshift(cardToMove);
             }
 
             return newLists;
@@ -259,11 +259,11 @@ export const Column = ({ list, setLists }: P) => {
         <h2 className="font-semibold text-gray-100 flex items-center">
           <span className="mr-2">{list.title}</span>
           <span className="bg-gray-200 text-gray-600 rounded-full px-2 py-0.5 text-xs">
-            {list.cards.length}
+            {list.tasks.length}
           </span>
         </h2>
       </div>
-      {list.cards.length === 0 && (
+      {list.tasks.length === 0 && (
         <div className="p-4 mx-3 my-2 border-2 border-dashed border-gray-400 rounded-md bg-cyan-800 bg-opacity-40">
           <div className="flex flex-col items-center text-center gap-2">
             <p className="text-gray-200 text-sm font-medium">No cards yet</p>
@@ -276,7 +276,7 @@ export const Column = ({ list, setLists }: P) => {
 
       {/* Cards container */}
       <div className="p-3">
-        {list.cards.map((card) => (
+        {list.tasks.map((card) => (
           <CardComponent
             key={card.id}
             card={card}

@@ -1,14 +1,43 @@
-import { List } from "./types";
-import { defaultData } from "./data";
+import { Board, List } from "./types";
 import { Column } from "./Column";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "./auth/AuthContext";
 import { useNavigate } from "react-router";
+import api from "./auth/api";
 
 function App() {
-  const [lists, setLists] = useState<List[]>(defaultData);
   const { authState, logout } = useAuth();
   const navigate = useNavigate();
+  const [lists, setLists] = useState<List[]>([]);
+  const [board, setBoard] = useState<Board | null>(null);
+  const [loading, setLoading] = useState(true);
+  console.log("board", board);
+
+  useEffect(() => {
+    const fetchBoards = async () => {
+      setLoading(true);
+      try {
+        const response = await api.get<Board[]>("/boards");
+        setBoard(response.data?.[0]);
+        setLists(response.data?.[0].columns || []);
+      } catch {
+        // setLists([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (authState.isAuthenticated) {
+      fetchBoards();
+    }
+  }, [authState.isAuthenticated]);
+
+  if (authState.loading || loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-950">
+        <span className="text-gray-200 text-xl">Loading...</span>
+      </div>
+    );
+  }
 
   const handleLogout = () => {
     logout();
@@ -17,9 +46,10 @@ function App() {
 
   return (
     <div className="bg-gray-950 min-h-screen p-8">
-      {/* Header with user info and logout */}
       <header className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-100">My Kanban Board</h1>
+        <h1 className="text-3xl font-bold text-gray-100">
+          {board?.title || ""}
+        </h1>
         {authState.isAuthenticated && authState.user && (
           <div className="flex items-center gap-4">
             <span className="text-gray-200 font-medium">

@@ -21,7 +21,7 @@ export class BoardService {
             email: true,
           },
         },
-        // columns: { include: { tasks: false } },
+        columns: { include: { tasks: true } },
       },
     });
   }

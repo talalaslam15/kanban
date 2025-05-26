@@ -34,23 +34,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     loading: true,
   });
 
-  // Check for token on initial load
+  // Check for token and validate user on initial load
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-
-    if (token && user) {
-      setAuthState({
-        isAuthenticated: true,
-        token,
-        user: JSON.parse(user),
-        loading: false,
-      });
-      navigate("/");
-    } else {
-      setAuthState({ ...authState, loading: false });
-      navigate("/login");
-    }
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setAuthState((prev) => ({ ...prev, loading: false }));
+        navigate("/login");
+        return;
+      }
+      try {
+        const response = await api.get("/auth/me");
+        const user = response.data;
+        setAuthState((prev) => ({
+          ...prev,
+          isAuthenticated: true,
+          user,
+          token,
+          loading: false,
+        }));
+        navigate("/");
+      } catch {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setAuthState((prev) => ({
+          ...prev,
+          isAuthenticated: false,
+          user: null,
+          token: null,
+          loading: false,
+        }));
+        navigate("/login");
+      }
+    };
+    checkAuth();
+    // eslint-disable-next-line
   }, []);
 
   // Login function
@@ -61,13 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         password,
       });
       const { access_token, user } = response.data;
-
-      // Store token and user in localStorage
-      if (access_token)
-        if (access_token) localStorage.setItem("token", access_token);
+      if (access_token) localStorage.setItem("token", access_token);
       if (user) localStorage.setItem("user", JSON.stringify(user));
-      if (user) localStorage.setItem("user", JSON.stringify(user));
-
       setAuthState({
         isAuthenticated: true,
         token: access_token,
@@ -89,11 +102,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         password,
       });
       const { access_token, user } = response.data;
-
-      // Store token and user in localStorage
       if (access_token) localStorage.setItem("token", access_token);
       if (user) localStorage.setItem("user", JSON.stringify(user));
-
       setAuthState({
         isAuthenticated: true,
         token: access_token,
@@ -108,10 +118,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Logout function
   const logout = () => {
-    // Remove token and user from localStorage
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
     setAuthState({
       isAuthenticated: false,
       token: null,
@@ -135,3 +143,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
+export default AuthProvider;

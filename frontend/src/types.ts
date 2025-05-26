@@ -5,16 +5,30 @@ export interface User {
   name: string;
   email: string;
 }
-export interface List {
+export interface Board {
   id: string;
   title: string;
-  cards: Card[];
+  ownerId: string;
+  owner: User;
+  columns: List[];
+}
+
+export interface List {
+  boardId: string;
+  position: number;
+  id: string;
+  title: string;
+  tasks: Card[];
 }
 
 export interface Card {
   id: string;
   title: string;
   description: string;
+  position: number;
+  columnId: string;
+  dueDate?: Date | null;
+  assigneeId?: string | null;
 }
 
 export type CardState =
