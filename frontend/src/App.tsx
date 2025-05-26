@@ -13,7 +13,6 @@ function App() {
   const [lists, setLists] = useState<List[]>([]);
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
-  console.log("board", board);
 
   useEffect(() => {
     const fetchBoards = async () => {
