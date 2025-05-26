@@ -12,24 +12,40 @@ import {
   Delete,
   NotFoundException,
   ValidationPipe,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { TaskService } from './task.service';
-import { ApiOkResponse, ApiNotFoundResponse, ApiBody } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiNotFoundResponse,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { TaskResponseDto } from './dto/task-response.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { IGetUserAuthInfoRequest } from 'src/auth/user.decorator';
 
 @Controller('tasks')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() data: CreateTaskDto) {
-    return this.taskService.create({
-      title: data.title,
-      description: data.description,
-      column: { connect: { id: data.columnId } },
-      position: data.position,
-    });
+  create(@Body() data: CreateTaskDto, @Req() req: IGetUserAuthInfoRequest) {
+    const userId = req.user.userId;
+
+    return this.taskService.create(
+      {
+        title: data.title,
+        description: data.description,
+        column: { connect: { id: data.columnId } },
+        position: data.position,
+      },
+      userId,
+    );
   }
 
   @Get()

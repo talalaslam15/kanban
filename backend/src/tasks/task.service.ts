@@ -1,6 +1,6 @@
 // src/task/task.service.ts
 
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -8,7 +8,22 @@ import { Prisma } from '@prisma/client';
 export class TaskService {
   constructor(private prisma: PrismaService) {}
 
-  create(data: Prisma.TaskCreateInput) {
+  async create(data: Prisma.TaskCreateInput, userId: string) {
+    // Step 1: Fetch the column and board info
+    const column = await this.prisma.column.findUnique({
+      where: { id: data.column.connect?.id },
+      include: { board: true },
+    });
+
+    if (!column) {
+      throw new ForbiddenException('Column not found');
+    }
+
+    // Step 2: Check if the board belongs to the logged-in user
+    if (column.board.ownerId !== userId) {
+      throw new ForbiddenException('You do not own this board');
+    }
+
     return this.prisma.task.create({ data });
   }
 
