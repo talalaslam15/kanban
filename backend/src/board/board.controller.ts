@@ -60,7 +60,6 @@ export class BoardController {
   @ApiOkResponse({ type: BoardResponseDto, isArray: true })
   findAll(@Req() req: IGetUserAuthInfoRequest) {
     const user = req.user as { userId: string }; // Adjust based on your JWT payload
-    console.log('User ID from JWT:', user.userId);
     return this.boardService.findAll(user.userId);
   }
 
