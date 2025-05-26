@@ -254,10 +254,13 @@ export const Column = ({ list, setLists }: P) => {
         bg-card text-card-foreground shadow-md
         ${isDraggedOver ? "outline-2 outline-primary bg-accent" : ""}
         ${isDragging ? "opacity-50" : ""}`}
-      style={{ backgroundColor: 'var(--color-card, #f8fafc)' }}
+      style={{ backgroundColor: "var(--color-card, #f8fafc)" }}
     >
       {/* List header */}
-      <div className="p-3 rounded-t-lg bg-popover text-popover-foreground" style={{ backgroundColor: 'var(--color-popover, #fff)' }}>
+      <div
+        className="p-3 rounded-t-lg bg-popover text-popover-foreground"
+        style={{ backgroundColor: "var(--color-popover, #fff)" }}
+      >
         <h2 className="font-semibold flex items-center">
           <span className="mr-2">{list.title}</span>
           <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">
@@ -266,7 +269,10 @@ export const Column = ({ list, setLists }: P) => {
         </h2>
       </div>
       {list.tasks.length === 0 && (
-        <div className="p-4 mx-3 my-2 border-2 border-dashed rounded-md bg-muted bg-opacity-40" style={{ backgroundColor: 'var(--color-muted, #f1f5f9)' }}>
+        <div
+          className="p-4 mx-3 my-2 border-2 border-dashed rounded-md bg-muted bg-opacity-40"
+          style={{ backgroundColor: "var(--color-muted, #f1f5f9)" }}
+        >
           <div className="flex flex-col items-center text-center gap-2">
             <p className="text-foreground text-sm font-medium">No cards yet</p>
             <p className="text-muted-foreground text-xs opacity-80">
@@ -289,7 +295,7 @@ export const Column = ({ list, setLists }: P) => {
       </div>
       {/* Add card button */}
       <div className="p-3 border-t border-border">
-        <button className="w-full py-1.5 bg-secondary text-secondary-foreground text-sm hover:bg-accent hover:text-accent-foreground rounded flex items-center justify-center transition-colors duration-200">
+        <button className="w-full py-1.5 cursor-pointer bg-secondary text-secondary-foreground text-sm hover:bg-accent hover:text-accent-foreground rounded flex items-center justify-center transition-colors duration-200 hover:shadow-sm">
           <svg
             className="w-4 h-4 mr-2"
             fill="none"
