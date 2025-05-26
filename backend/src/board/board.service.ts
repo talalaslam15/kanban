@@ -10,8 +10,9 @@ export class BoardService {
     return this.prisma.board.create({ data });
   }
 
-  findAll() {
+  findAll(userId: string) {
     return this.prisma.board.findMany({
+      where: { ownerId: userId },
       include: {
         owner: {
           select: {

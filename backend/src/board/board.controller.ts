@@ -8,6 +8,8 @@ import {
   Delete,
   NotFoundException,
   BadRequestException,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { BoardService } from './board.service';
 import { CreateBoardDto } from './dto/create-board.dto';
@@ -17,9 +19,12 @@ import {
   ApiOkResponse,
   ApiNotFoundResponse,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { BoardResponseDto } from './dto/board-response.dto';
 import { Prisma } from '@prisma/client';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { IGetUserAuthInfoRequest } from 'src/auth/user.decorator';
 
 @ApiTags('boards')
 @Controller('boards')
@@ -49,10 +54,14 @@ export class BoardController {
     }
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Get()
   @ApiOkResponse({ type: BoardResponseDto, isArray: true })
-  findAll() {
-    return this.boardService.findAll();
+  findAll(@Req() req: IGetUserAuthInfoRequest) {
+    const user = req.user as { userId: string }; // Adjust based on your JWT payload
+    console.log('User ID from JWT:', user.userId);
+    return this.boardService.findAll(user.userId);
   }
 
   @Get(':id')
