@@ -33,12 +33,12 @@ export class AuthService {
         email,
         name,
         password: hashed,
-        boards: {
-          create: {
-            title: 'My First Board',
-            description: 'This is your first board!',
-          },
-        },
+        // boards: {
+        //   create: {
+        //     title: 'My First Board',
+        //     description: 'This is your first board!',
+        //   },
+        // },
       },
     });
 
