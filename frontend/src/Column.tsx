@@ -250,24 +250,26 @@ export const Column = ({ list, setLists }: P) => {
   return (
     <div
       ref={ref}
-      className={`m-2 bg-cyan-900 rounded-lg w-80 relative h-fit ${
-        isDraggedOver ? "outline-2 outline-blue-500 bg-teal-900" : ""
-      } ${isDragging ? "opacity-50" : ""}`}
+      className={`m-2 rounded-lg w-80 relative h-fit transition-colors duration-300
+        bg-card text-card-foreground shadow-md
+        ${isDraggedOver ? "outline-2 outline-primary bg-accent" : ""}
+        ${isDragging ? "opacity-50" : ""}`}
+      style={{ backgroundColor: 'var(--color-card, #f8fafc)' }}
     >
       {/* List header */}
-      <div className="p-3 bg-blue-900-300 rounded-t-lg">
-        <h2 className="font-semibold text-gray-100 flex items-center">
+      <div className="p-3 rounded-t-lg bg-popover text-popover-foreground" style={{ backgroundColor: 'var(--color-popover, #fff)' }}>
+        <h2 className="font-semibold flex items-center">
           <span className="mr-2">{list.title}</span>
-          <span className="bg-gray-200 text-gray-600 rounded-full px-2 py-0.5 text-xs">
+          <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">
             {list.tasks.length}
           </span>
         </h2>
       </div>
       {list.tasks.length === 0 && (
-        <div className="p-4 mx-3 my-2 border-2 border-dashed border-gray-400 rounded-md bg-cyan-800 bg-opacity-40">
+        <div className="p-4 mx-3 my-2 border-2 border-dashed rounded-md bg-muted bg-opacity-40" style={{ backgroundColor: 'var(--color-muted, #f1f5f9)' }}>
           <div className="flex flex-col items-center text-center gap-2">
-            <p className="text-gray-200 text-sm font-medium">No cards yet</p>
-            <p className="text-gray-300 text-xs opacity-80">
+            <p className="text-foreground text-sm font-medium">No cards yet</p>
+            <p className="text-muted-foreground text-xs opacity-80">
               Drag cards here or add a new card below
             </p>
           </div>
@@ -286,8 +288,8 @@ export const Column = ({ list, setLists }: P) => {
         ))}
       </div>
       {/* Add card button */}
-      <div className="p-3 border-t border-gray-300">
-        <button className="w-full py-1.5 bg-gray-50 text-gray-500 text-sm hover:bg-gray-300 rounded flex items-center justify-center transition-colors duration-200">
+      <div className="p-3 border-t border-border">
+        <button className="w-full py-1.5 bg-secondary text-secondary-foreground text-sm hover:bg-accent hover:text-accent-foreground rounded flex items-center justify-center transition-colors duration-200">
           <svg
             className="w-4 h-4 mr-2"
             fill="none"

@@ -181,26 +181,26 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
             if (!sourceList || !targetList) return prevLists;
 
             // Find the card to move
-            const cardToMove = sourceList.cards.find(
+            const cardToMove = sourceList.tasks.find(
               (card) => card.id === sourceCardId
             );
             if (!cardToMove) return prevLists;
 
             // Remove the card from the source list
-            sourceList.cards = sourceList.cards.filter(
+            sourceList.tasks = sourceList.tasks.filter(
               (card) => card.id !== sourceCardId
             );
 
             // Find the position of the target card in the target list
-            const targetCardIndex = targetList.cards.findIndex(
+            const targetCardIndex = targetList.tasks.findIndex(
               (card) => card.id === targetCard
             );
 
             // Insert the card at the appropriate position based on the edge
             if (closestEdge === "bottom") {
-              targetList.cards.splice(targetCardIndex + 1, 0, cardToMove);
+              targetList.tasks.splice(targetCardIndex + 1, 0, cardToMove);
             } else {
-              targetList.cards.splice(targetCardIndex, 0, cardToMove);
+              targetList.tasks.splice(targetCardIndex, 0, cardToMove);
             }
 
             return newLists;
@@ -214,18 +214,17 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
     <div className="relative">
       <div
         ref={ref}
-        className={`border-b-gray-900 bg-blue-950 rounded-lg p-3 mb-3 shadow cursor-grab hover:shadow-md transition-shadow duration-200 ${
-          isDragging ? "opacity-50" : ""
-        }`}
+        className={`bg-card text-card-foreground border border-border rounded-lg p-3 mb-3 shadow cursor-grab hover:shadow-md transition-colors duration-300
+          ${isDragging ? "opacity-50" : ""}`}
       >
-        <h3 className="font-medium text-gray-200 mb-2">{card.title}</h3>
-        <p className="text-gray-400 text-sm">{card.description}</p>
+        <h3 className="font-medium mb-2 text-foreground">{card.title}</h3>
+        <p className="text-muted-foreground text-sm">{card.description}</p>
 
         {/* Card footer with labels/actions */}
         <div className="mt-3 flex items-center justify-between">
           <div className="flex gap-1">
-            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-            <span className="w-2 h-2 rounded-full bg-green-500"></span>
+            <span className="w-2 h-2 rounded-full bg-primary"></span>
+            <span className="w-2 h-2 rounded-full bg-secondary"></span>
           </div>
         </div>
       </div>

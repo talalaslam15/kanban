@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "./auth/AuthContext";
 import { useNavigate } from "react-router";
 import api from "./auth/api";
+import { Button } from "./components/ui/button";
+import { ModeToggle } from "./components/mode-toggle";
 
 function App() {
   const { authState, logout } = useAuth();
@@ -45,22 +47,26 @@ function App() {
   };
 
   return (
-    <div className="bg-gray-950 min-h-screen p-8">
+    <div className="min-h-screen p-8 bg-background text-foreground transition-colors duration-300">
       <header className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-100">
+        <h1
+          className="text-3xl font-bold"
+          style={{ color: "var(--color-primary)" }}
+        >
           {board?.title || ""}
         </h1>
         {authState.isAuthenticated && authState.user && (
           <div className="flex items-center gap-4">
-            <span className="text-gray-200 font-medium">
+            <ModeToggle />
+            <span
+              className="font-medium"
+              style={{ color: "var(--color-secondary-foreground)" }}
+            >
               {authState.user.name || authState.user.email}
             </span>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition"
-            >
+            <Button onClick={handleLogout} color="secondary">
               Logout
-            </button>
+            </Button>
           </div>
         )}
       </header>
