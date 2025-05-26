@@ -295,7 +295,7 @@ export const Column = ({ list, setLists }: P) => {
       </div>
       {/* Add card button */}
       <div className="p-3 border-t border-border">
-        <button className="w-full py-1.5 cursor-pointer bg-secondary text-secondary-foreground text-sm hover:bg-accent hover:text-accent-foreground rounded flex items-center justify-center transition-colors duration-200 hover:shadow-sm">
+        <button className="w-full py-1.5 cursor-pointer bg-primary text-primary-foreground text-sm hover:bg-accent-foreground hover:text-accent rounded flex items-center justify-center transition-colors duration-200 hover:shadow-sm">
           <svg
             className="w-4 h-4 mr-2"
             fill="none"
