@@ -3,9 +3,10 @@ import { Column } from "./Column";
 import { useState, useEffect } from "react";
 import { useAuth } from "./auth/AuthContext";
 import { useNavigate } from "react-router";
-import api from "./auth/api";
 import { Button } from "./components/ui/button";
 import { ModeToggle } from "./components/mode-toggle";
+import { AddColumn } from "./AddColumn";
+import { getBoards } from "./api/boards.api";
 
 function App() {
   const { authState, logout } = useAuth();
@@ -14,19 +15,20 @@ function App() {
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchBoards = async () => {
+    setLoading(true);
+    try {
+      const response = await getBoards();
+      setBoard(response?.[0]);
+      setLists(response?.[0].columns || []);
+    } catch {
+      // setLists([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchBoards = async () => {
-      setLoading(true);
-      try {
-        const response = await api.get<Board[]>("/boards");
-        setBoard(response.data?.[0]);
-        setLists(response.data?.[0].columns || []);
-      } catch {
-        // setLists([]);
-      } finally {
-        setLoading(false);
-      }
-    };
     if (authState.isAuthenticated) {
       fetchBoards();
     }
@@ -74,6 +76,13 @@ function App() {
         {lists.map((list) => (
           <Column key={list.id} list={list} setLists={setLists} />
         ))}
+        {board && (
+          <AddColumn
+            boardId={board.id}
+            position={lists.length}
+            onAddColumn={fetchBoards}
+          />
+        )}
       </div>
     </div>
   );
