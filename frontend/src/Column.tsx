@@ -23,6 +23,8 @@ import {
 } from "./components/ui/dialog";
 import { Button } from "./components/ui/button";
 import api from "./auth/api";
+import { updateTask } from "./api/tasks.api";
+import { updateColumn } from "./api/columns.api";
 
 function isCardData(data: unknown): data is { card: Card; listId: string } {
   if (typeof data !== "object" || data === null) {
@@ -195,16 +197,17 @@ export const Column = ({ list, setLists }: P) => {
               newLists.splice(newLists.indexOf(sourceList), 1);
 
               // Insert the list at the appropriate position based on the edge
-              if (closestEdge === "right") {
-                newLists.splice(
-                  newLists.indexOf(targetList) + 1,
-                  0,
-                  sourceList
-                );
-              } else {
-                newLists.splice(newLists.indexOf(targetList), 0, sourceList);
-              }
-              console.log("self.data.closestEdge", closestEdge);
+              const newPosition =
+                closestEdge === "right"
+                  ? newLists.indexOf(targetList) + 1
+                  : newLists.indexOf(targetList);
+              newLists.splice(newPosition, 0, sourceList);
+
+              // Make the api call to update the list's position
+              updateColumn(sourceList.id, {
+                position: newPosition,
+                boardId: targetList.boardId, // Assuming the boardId is the same for both lists
+              });
 
               return newLists;
             });
@@ -230,6 +233,13 @@ export const Column = ({ list, setLists }: P) => {
 
           // We already have the card object in source.data.card
           const cardToMove = source.data.card;
+          const targetListCardsLength = self.data.data.list.tasks.length;
+
+          // call the api to update the card's column
+          updateTask(cardToMove.id, {
+            columnId: targetListId,
+            position: closestEdge === "bottom" ? targetListCardsLength : 0,
+          });
 
           setLists((prevLists) => {
             // Create a deep copy of the lists
@@ -316,15 +326,16 @@ export const Column = ({ list, setLists }: P) => {
       ref={ref}
       className={`m-2 rounded-lg w-80 relative h-fit transition-colors duration-300
         bg-card text-card-foreground shadow-md
-        ${isDraggedOver ? "outline-2 outline-primary bg-accent" : ""}
+        ${isDraggedOver ? "outline-2 outline-primary" : ""}
         ${isDragging ? "opacity-50" : ""}`}
-      style={{ backgroundColor: "var(--color-card, #f8fafc)" }}
+      style={
+        isDraggedOver
+          ? { backgroundColor: "var(--column-drop-hover)" }
+          : undefined
+      }
     >
       {/* List header */}
-      <div
-        className="p-3 rounded-t-lg bg-popover text-popover-foreground"
-        style={{ backgroundColor: "var(--color-popover, #fff)" }}
-      >
+      <div className="p-3 rounded-t-lg">
         <h2 className="font-semibold flex items-center">
           <span className="mr-2">{list.title}</span>
           <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">

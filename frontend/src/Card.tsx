@@ -11,6 +11,7 @@ import {
 import invariant from "tiny-invariant";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
+import { updateTask } from "./api/tasks.api";
 
 const privateCardSymbol = Symbol("Card");
 
@@ -166,6 +167,13 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
             return;
           }
 
+          // updateTask(sourceCardId, {
+          //   columnId: targetListId,
+          //   position: self.data.data.card.position,
+          // }).catch((error) => {
+          //   console.error("Failed to update task position:", error);
+          // });
+
           setLists((prevLists) => {
             // Create a deep copy of the lists
             const newLists: List[] = JSON.parse(JSON.stringify(prevLists));
@@ -196,13 +204,18 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
               (card) => card.id === targetCard
             );
 
-            // Insert the card at the appropriate position based on the edge
-            if (closestEdge === "bottom") {
-              targetList.tasks.splice(targetCardIndex + 1, 0, cardToMove);
-            } else {
-              targetList.tasks.splice(targetCardIndex, 0, cardToMove);
-            }
+            // // Insert the card at the appropriate position based on the edge
+            const newPosition =
+              closestEdge === "bottom" ? targetCardIndex + 1 : targetCardIndex;
 
+            targetList.tasks.splice(newPosition, 0, cardToMove);
+            // Call the API to update the task position
+            updateTask(sourceCardId, {
+              columnId: targetListId,
+              position: newPosition,
+            }).catch((error) => {
+              console.error("Failed to update task position:", error);
+            });
             return newLists;
           });
         },
