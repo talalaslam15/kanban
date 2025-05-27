@@ -8,7 +8,6 @@ import {
   DialogFooter,
 } from "./components/ui/dialog";
 import { Button } from "./components/ui/button";
-import { List } from "./types";
 import { createColumn } from "./api/columns.api";
 
 interface AddColumnProps {
@@ -53,7 +52,7 @@ export const AddColumn: React.FC<AddColumnProps> = ({
   };
 
   return (
-    <div className="m-2 rounded-lg w-80 h-full flex flex-col justify-center items-center bg-card text-card-foreground shadow-md border-2 border-dashed border-border min-h-[200px]">
+    <div className="m-2 rounded-lg p-2 w-80 h-full flex flex-col justify-center items-center bg-card text-card-foreground shadow-md border-2 border-dashed border-border min-h-[200px]">
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <button
