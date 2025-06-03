@@ -106,6 +106,10 @@ export const Column = ({ list, setLists }: P) => {
       dropTargetForElements({
         element,
         canDrop: ({ source }) => {
+          if (source.data.listId === list.id) {
+            // Prevent dropping on the same list
+            return false;
+          }
           if (source.data.list) {
             return true;
           }
