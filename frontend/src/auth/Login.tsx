@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { useNavigate, NavLink } from "react-router";
 import { useAuth } from "./AuthContext";
 import axios from "axios";
@@ -29,22 +30,23 @@ export const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center">
-      <div className="w-full max-w-md bg-cyan-950 p-8 rounded-lg shadow-lg">
-        <h1 className="text-2xl font-bold mb-6 text-gray-100 text-center">
-          Log In
-        </h1>
+    <div className="flex items-center justify-center h-full">
+      <div className="max-w-lg p-8 rounded-lg ">
+        <h1 className="text-3xl font-bold mb-4">Welcome Back 👋</h1>
+        <p className="text-lg mb-4">
+          Stay organized and in control. Log in to access your boards, manage
+          tasks, and keep your workflow moving forward.
+        </p>
 
         {error && (
-          <div className="bg-red-500 text-white p-3 rounded mb-4">{error}</div>
+          <div className="bg-rose-500 text-xs text-white p-3 rounded mb-4">
+            {error}
+          </div>
         )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-300 mb-1"
-            >
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
               Email
             </label>
             <input
@@ -52,7 +54,7 @@ export const Login = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100"
+              className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
@@ -60,7 +62,7 @@ export const Login = () => {
           <div className="mb-6">
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-300 mb-1"
+              className="block text-sm font-medium mb-1"
             >
               Password
             </label>
@@ -69,25 +71,23 @@ export const Login = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100"
+              className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className={`w-full py-2 px-4 rounded-md bg-cyan-600 text-white font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-              isLoading ? "opacity-70 cursor-not-allowed" : "hover:bg-cyan-700"
-            }`}
+            className="w-full cursor-pointer"
           >
             {isLoading ? "Logging in..." : "Log In"}
-          </button>
+          </Button>
         </form>
 
-        <p className="mt-4 text-center text-gray-400">
+        <p className="mt-4 text-center">
           Don't have an account?{" "}
-          <NavLink to="/register" className="text-blue-400 hover:text-blue-300">
+          <NavLink to="/register" className="text-cyan-600 hover:underline">
             Sign up
           </NavLink>
         </p>
