@@ -3,7 +3,6 @@ import { Card, CardState, type List } from "./types";
 import {
   draggable,
   dropTargetForElements,
-  // monitorForElements,
 } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import invariant from "tiny-invariant";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -24,19 +23,26 @@ import {
 import { Button } from "./components/ui/button";
 import api from "./auth/api";
 import { updateTask } from "./api/tasks.api";
-import { updateColumn } from "./api/columns.api";
+import { updateColumn, deleteColumn } from "./api/columns.api";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "./components/ui/popover";
+import { MoreVertical } from "lucide-react";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 function isCardData(data: unknown): data is { card: Card; listId: string } {
   if (typeof data !== "object" || data === null) {
     return false;
   }
 
-  const candidate = data as Record<string, unknown>;
+  const candidate1 = data as Record<string, unknown>;
 
   return (
-    typeof candidate.card === "object" &&
-    candidate.card !== null &&
-    typeof candidate.listId === "string"
+    typeof candidate1.card === "object" &&
+    candidate1.card !== null &&
+    typeof candidate1.listId === "string"
   );
 }
 type ColumnDropTargetData = {
@@ -51,13 +57,13 @@ function isColumnDropTargetData(data: unknown): data is ColumnDropTargetData {
     return false;
   }
 
-  const candidate = data as Record<string, unknown>;
+  const candidate2 = data as Record<string, unknown>;
 
-  if (typeof candidate.data !== "object" || candidate.data === null) {
+  if (typeof candidate2.data !== "object" || candidate2.data === null) {
     return false;
   }
 
-  const nestedData = candidate.data as Record<string, unknown>;
+  const nestedData = candidate2.data as Record<string, unknown>;
 
   return (
     typeof nestedData.list === "object" &&
@@ -85,6 +91,11 @@ export const Column = ({ list, setLists }: P) => {
   });
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState("");
+  const [editOpen, setEditOpen] = React.useState(false);
+  const [editTitle, setEditTitle] = React.useState(list.title);
+  const [editLoading, setEditLoading] = React.useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [editError, setEditError] = React.useState("");
 
   React.useEffect(() => {
     const element = ref.current;
@@ -325,6 +336,38 @@ export const Column = ({ list, setLists }: P) => {
     }
   };
 
+  // Edit column name handler
+  const handleEditColumn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditLoading(true);
+    setEditError("");
+    try {
+      await updateColumn(list.id, { title: editTitle });
+      setLists((prev) =>
+        prev.map((l) => (l.id === list.id ? { ...l, title: editTitle } : l))
+      );
+      setEditOpen(false);
+    } catch {
+      setEditError("Failed to update column name");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  // Delete column handler
+  const handleDeleteColumn = async () => {
+    setEditLoading(true);
+    try {
+      await deleteColumn(list.id);
+      setLists((prev) => prev.filter((l) => l.id !== list.id));
+      setDeleteDialogOpen(false);
+    } catch {
+      setEditError("Failed to delete column");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   return (
     <div
       ref={ref}
@@ -339,14 +382,87 @@ export const Column = ({ list, setLists }: P) => {
       }
     >
       {/* List header */}
-      <div className="p-3 rounded-t-lg">
+      <div className="p-3 rounded-t-lg flex items-center justify-between">
         <h2 className="font-semibold flex items-center">
           <span className="mr-2">{list.title}</span>
           <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">
             {list.tasks.length}
           </span>
         </h2>
+        {/* 3 dots menu */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="p-1 rounded hover:bg-muted focus:outline-none">
+              <MoreVertical className="w-5 h-5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-44 p-0" align="end">
+            <div className="py-1">
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors"
+                onClick={() => {
+                  setEditTitle(list.title);
+                  setEditOpen(true);
+                }}
+              >
+                Edit title
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                Delete column
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
+      {/* Edit column dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit column name</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditColumn} className="space-y-4">
+            <div>
+              <input
+                className="w-full px-3 py-2 rounded border border-border bg-background text-foreground"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            {editError && (
+              <div className="text-red-500 text-sm">{editError}</div>
+            )}
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={editLoading}>
+                {editLoading ? "Saving..." : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete column"
+        description="Are you sure you want to delete this column? This action cannot be undone."
+        loading={editLoading}
+        error={editError}
+        onConfirm={handleDeleteColumn}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+      />
       {list.tasks.length === 0 && (
         <div
           className="p-4 mx-3 my-2 border-2 border-dashed rounded-md bg-muted bg-opacity-40"
