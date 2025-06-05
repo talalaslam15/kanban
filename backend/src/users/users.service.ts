@@ -46,10 +46,26 @@ export class UsersService {
     });
   }
 
-  update(id: string, data: Prisma.UserUpdateInput) {
+  async update(id: string, data: Prisma.UserUpdateInput) {
+    if (data.email && typeof data.email === 'string') {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: data.email },
+      });
+      if (existingUser && existingUser.id !== id) {
+        throw new ConflictException('User with this email already exists');
+      }
+    }
+    let hashedPassword: string | undefined;
+    if (data.password && typeof data.password === 'string') {
+      hashedPassword = await bcrypt.hash(data.password, 10);
+    }
+
     return this.prisma.user.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        ...(hashedPassword ? { password: hashedPassword } : {}),
+      },
     });
   }
 
