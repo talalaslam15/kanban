@@ -32,7 +32,7 @@ export const BoardDropdown: React.FC<BoardDropdownProps> = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-0 w-56" align="start">
-        <ul>
+        <ul className="py-2">
           {boards.map((board) => (
             <li
               key={board.id}
