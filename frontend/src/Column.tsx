@@ -371,15 +371,18 @@ export const Column = ({ list, setLists }: P) => {
   return (
     <div
       ref={ref}
-      className={`m-2 rounded-lg w-80 relative h-fit transition-colors duration-300
+      className={`m-2 rounded-lg relative h-fit transition-colors duration-300
         bg-card text-card-foreground shadow-md
         ${isDraggedOver ? "outline-2 outline-primary" : ""}
         ${isDragging ? "opacity-50" : ""}`}
-      style={
-        isDraggedOver
+      style={{
+        minWidth: 320,
+        maxWidth: 400,
+        width: "100%",
+        ...(isDraggedOver
           ? { backgroundColor: "var(--column-drop-hover)" }
-          : undefined
-      }
+          : {}),
+      }}
     >
       {/* List header */}
       <div className="p-3 rounded-t-lg flex items-center justify-between">
