@@ -2,25 +2,27 @@ import { Board, List } from "./types";
 import { Column } from "./Column";
 import { useState, useEffect } from "react";
 import { useAuth } from "./auth/AuthContext";
-import { useNavigate } from "react-router";
-import { Button } from "./components/ui/button";
-import { ModeToggle } from "./components/mode-toggle";
 import { AddColumn } from "./AddColumn";
 import { getBoards } from "./api/boards.api";
+import { Header } from "./Header";
 
 function App() {
-  const { authState, logout } = useAuth();
-  const navigate = useNavigate();
+  const { authState } = useAuth();
   const [lists, setLists] = useState<List[]>([]);
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchBoards = async () => {
+  const fetchBoards = async (boardId?: string) => {
     setLoading(true);
     try {
       const response = await getBoards();
-      setBoard(response?.[0]);
-      setLists(response?.[0].columns || []);
+      let selected = response?.[0] || null;
+      if (boardId) {
+        const found = response.find((b) => b.id === boardId);
+        if (found) selected = found;
+      }
+      setBoard(selected);
+      setLists(selected?.columns || []);
     } catch {
       // setLists([]);
     } finally {
@@ -34,6 +36,11 @@ function App() {
     }
   }, [authState.isAuthenticated]);
 
+  const handleBoardChange = (b: Board) => {
+    setBoard(b);
+    setLists(b.columns || []);
+  };
+
   if (authState.loading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-950">
@@ -42,37 +49,17 @@ function App() {
     );
   }
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   return (
     <div className="min-h-screen p-8 bg-muted text-foreground transition-colors duration-300">
-      <header className="flex justify-between items-center mb-6">
-        <h1
-          className="text-3xl font-bold"
-          style={{ color: "var(--color-primary)" }}
-        >
-          {board?.title || ""}
-        </h1>
-        {authState.isAuthenticated && authState.user && (
-          <div className="flex items-center gap-4">
-            <ModeToggle />
-            <span
-              className="font-medium"
-              style={{ color: "var(--color-secondary-foreground)" }}
-            >
-              {authState.user.name || authState.user.email}
-            </span>
-            <Button onClick={handleLogout} color="secondary">
-              Logout
-            </Button>
-          </div>
-        )}
-      </header>
-
-      <div className="pl-2 flex gap-2 overflow-x-auto ">
+      <Header board={board} onBoardChange={handleBoardChange} />
+      <h1 className="text-3xl font-bold">{board?.title || ""}</h1>
+      <div
+        className="pl-2 flex gap-2 overflow-x-auto flex-nowrap scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent"
+        style={{
+          WebkitOverflowScrolling: "touch",
+          minHeight: "calc(100vh - 160px)",
+        }}
+      >
         {lists.map((list) => (
           <Column key={list.id} list={list} setLists={setLists} />
         ))}
@@ -80,7 +67,7 @@ function App() {
           <AddColumn
             boardId={board.id}
             position={lists.length}
-            onAddColumn={fetchBoards}
+            onAddColumn={() => fetchBoards(board.id)}
           />
         )}
       </div>
