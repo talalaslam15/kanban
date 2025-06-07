@@ -20,4 +20,20 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Add a response interceptor to handle 401 errors globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      // Use a redirect to /login. This works outside React components.
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
