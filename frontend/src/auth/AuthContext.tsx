@@ -3,6 +3,9 @@ import api from "./api";
 import { User } from "../types";
 import { useNavigate } from "react-router";
 
+const authPages = ["/login", "/register"];
+const isAuthPage = authPages.includes(window.location.pathname);
+
 // Shape of our auth state
 interface AuthState {
   isAuthenticated: boolean;
@@ -14,8 +17,8 @@ interface AuthState {
 // The context type
 interface AuthContextProps {
   authState: AuthState;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  login: (_email: string, _password: string) => Promise<void>;
+  register: (_name: string, _email: string, _password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -38,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
-      if (!token) {
+      if (!token && !isAuthPage) {
         setAuthState((prev) => ({ ...prev, loading: false }));
         navigate("/login");
         return;
@@ -53,23 +56,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           token,
           loading: false,
         }));
-        navigate("/");
+        // If user is on an auth page (login/register) and already authenticated, redirect to home
+        if (isAuthPage) {
+          navigate("/");
+        }
       } catch {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        setAuthState((prev) => ({
-          ...prev,
-          isAuthenticated: false,
-          user: null,
-          token: null,
-          loading: false,
-        }));
-        navigate("/login");
+        console.error("Authentication check failed");
       }
     };
     checkAuth();
-    // eslint-disable-next-line
-  }, []);
+  }, [navigate]);
 
   // Login function
   const login = async (email: string, password: string) => {
