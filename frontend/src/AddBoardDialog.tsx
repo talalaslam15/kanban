@@ -8,8 +8,8 @@ import {
   DialogFooter,
 } from "./components/ui/dialog";
 import { Button } from "./components/ui/button";
-import { createBoard } from "./api/boards.api";
 import { Board } from "./types";
+import { createBoard } from "./features/boards/boards.api";
 
 interface AddBoardDialogProps {
   ownerId: string;

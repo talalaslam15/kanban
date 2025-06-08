@@ -11,7 +11,7 @@ import {
 
 interface BoardDropdownProps {
   boards: Board[];
-  currentBoard: Board | null;
+  currentBoard: Board | undefined;
   onSelect: (_board: Board) => void;
   onAddBoard: () => void;
 }

@@ -1,45 +1,33 @@
-import { Board, List } from "./types";
 import { Column } from "./Column";
-import { useState, useEffect } from "react";
 import { useAuth } from "./auth/AuthContext";
 import { AddColumn } from "./AddColumn";
-import { getBoards } from "./api/boards.api";
 import { Header } from "./Header";
+import { useGetBoards } from "./features/boards/hooks/useGetBoards";
+import React, { useState } from "react";
+import { List } from "./types";
 
 function App() {
   const { authState } = useAuth();
+  const { data: boards, isFetching: loading, refetch } = useGetBoards();
   const [lists, setLists] = useState<List[]>([]);
-  const [board, setBoard] = useState<Board | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Track selected board ID in state
+  const [selectedBoardId, setSelectedBoardId] = useState<string | undefined>(
+    undefined
+  );
+  // Find the selected board from the fetched boards
+  const board = boards?.find((b) => b.id === selectedBoardId) || boards?.[0];
+  // const lists = board?.columns || [];
 
-  const fetchBoards = async (boardId?: string) => {
-    setLoading(true);
-    try {
-      const response = await getBoards();
-      let selected = response?.[0] || null;
-      if (boardId) {
-        const found = response.find((b) => b.id === boardId);
-        if (found) selected = found;
-      }
-      setBoard(selected);
-      setLists(selected?.columns || []);
-    } catch {
-      // setLists([]);
-    } finally {
-      setLoading(false);
-    }
+  // Handler for board change
+  const handleBoardChange = (b: { id: string }) => {
+    setSelectedBoardId(b.id);
   };
 
-  useEffect(() => {
-    if (authState.isAuthenticated) {
-      fetchBoards();
+  React.useEffect(() => {
+    if (board) {
+      setLists(board?.columns || []); // sync query data into local state
     }
-  }, [authState.isAuthenticated]);
-
-  const handleBoardChange = (b: Board) => {
-    setBoard(b);
-    setLists(b.columns || []);
-  };
+  }, [board]);
 
   if (authState.loading || loading) {
     return (
@@ -51,7 +39,12 @@ function App() {
 
   return (
     <div className="min-h-screen p-8 bg-muted text-foreground transition-colors duration-300">
-      <Header board={board} onBoardChange={handleBoardChange} />
+      <Header
+        boards={boards || []}
+        onBoardChange={handleBoardChange}
+        onAddBoard={() => refetch()}
+        currentBoard={board}
+      />
       <h1 className="text-3xl font-bold">{board?.title || ""}</h1>
       <div
         className="pl-2 flex gap-2 overflow-x-auto flex-nowrap scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent"
@@ -67,7 +60,7 @@ function App() {
           <AddColumn
             boardId={board.id}
             position={lists.length}
-            onAddColumn={() => fetchBoards(board.id)}
+            onAddColumn={() => refetch()}
           />
         )}
       </div>

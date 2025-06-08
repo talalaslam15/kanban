@@ -1,28 +1,27 @@
-import { useState, useEffect } from "react";
 import { useAuth } from "./auth/AuthContext";
 import { useNavigate } from "react-router";
 import { ModeToggle } from "./components/mode-toggle";
 import { Button } from "./components/ui/button";
 import { Board } from "./types";
-import { getBoards } from "./api/boards.api";
+// import { getBoards } from "./api/boards.api";
 import { BoardDropdown } from "./BoardDropdown";
 import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar";
 
 type P = {
-  board: Board | null;
+  boards: Board[];
   onBoardChange?: (_board: Board) => void;
+  onAddBoard: () => void;
+  currentBoard: Board | undefined;
 };
 
-export const Header = ({ board, onBoardChange }: P) => {
+export const Header = ({
+  boards,
+  onBoardChange,
+  onAddBoard,
+  currentBoard,
+}: P) => {
   const { authState, logout } = useAuth();
   const navigate = useNavigate();
-  const [boards, setBoards] = useState<Board[]>([]);
-
-  useEffect(() => {
-    if (authState.isAuthenticated) {
-      getBoards().then(setBoards);
-    }
-  }, [authState.isAuthenticated]);
 
   const handleLogout = () => {
     logout();
@@ -38,13 +37,9 @@ export const Header = ({ board, onBoardChange }: P) => {
       <div className="flex items-center gap-4">
         <BoardDropdown
           boards={boards}
-          currentBoard={board}
+          currentBoard={currentBoard}
           onSelect={handleSelectBoard}
-          onAddBoard={async () => {
-            // Refetch boards after dialog adds a new board
-            const updated = await getBoards();
-            setBoards(updated);
-          }}
+          onAddBoard={onAddBoard}
         />
       </div>
       {authState.isAuthenticated && authState.user && (
