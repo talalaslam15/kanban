@@ -1,5 +1,5 @@
 import api from "@/auth/api";
-import { Board } from "../types";
+import { Board } from "@/types";
 
 export const getBoards = async (): Promise<Board[]> => {
   const res = await api.get("/boards");
