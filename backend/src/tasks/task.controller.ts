@@ -26,13 +26,14 @@ import { TaskResponseDto } from './dto/task-response.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { IGetUserAuthInfoRequest } from 'src/auth/user.decorator';
+import { TaskOwnerGuard } from './task-owner.guard';
 
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('tasks')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() data: CreateTaskDto, @Req() req: IGetUserAuthInfoRequest) {
     const userId = req.user.userId;
@@ -54,10 +55,11 @@ export class TaskController {
     type: TaskResponseDto,
     isArray: true, // because this returns an array
   })
-  findAll() {
-    return this.taskService.findAll();
+  findAll(@Req() req: IGetUserAuthInfoRequest) {
+    return this.taskService.findAll(req.user.userId);
   }
 
+  @UseGuards(TaskOwnerGuard)
   @Get(':id')
   @ApiOkResponse({
     description: 'Task found',
@@ -74,6 +76,7 @@ export class TaskController {
     return task;
   }
 
+  @UseGuards(TaskOwnerGuard)
   @Patch(':id')
   @ApiOkResponse({
     description: 'Task updated',
@@ -102,6 +105,7 @@ export class TaskController {
     return this.taskService.update(id, updateData);
   }
 
+  @UseGuards(TaskOwnerGuard)
   @Delete(':id')
   @ApiOkResponse({ description: 'Task deleted successfully' })
   @ApiNotFoundResponse({ description: 'Task not found' })
