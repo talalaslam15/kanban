@@ -1,5 +1,3 @@
-// src/task/task.service.ts
-
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -27,12 +25,26 @@ export class TaskService {
     return this.prisma.task.create({ data });
   }
 
-  findAll() {
-    return this.prisma.task.findMany();
+  findAll(userId: string) {
+    return this.prisma.task.findMany({
+      where: {
+        column: {
+          board: {
+            ownerId: userId,
+          },
+        },
+      },
+      include: { column: true },
+    });
   }
 
   findOne(id: string) {
-    return this.prisma.task.findUnique({ where: { id } });
+    return this.prisma.task.findUnique({
+      where: { id },
+      include: {
+        column: { include: { board: { select: { ownerId: true } } } },
+      },
+    });
   }
 
   update(id: string, data: Prisma.TaskUpdateInput) {
