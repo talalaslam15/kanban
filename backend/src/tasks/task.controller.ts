@@ -1,6 +1,4 @@
-// src/task/task.controller.ts
 import { CreateTaskDto } from './dto/create-task.dto';
-// import { UpdateTaskDto } from './dto/update-task.dto';
 
 import {
   Controller,
@@ -10,7 +8,6 @@ import {
   Patch,
   Param,
   Delete,
-  NotFoundException,
   ValidationPipe,
   UseGuards,
   Req,
@@ -26,7 +23,7 @@ import { TaskResponseDto } from './dto/task-response.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { IGetUserAuthInfoRequest } from 'src/auth/user.decorator';
-import { TaskOwnerGuard } from './task-owner.guard';
+import { OwnerGuard, ResourceType } from 'src/guards/owner-guard';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -37,16 +34,14 @@ export class TaskController {
   @Post()
   create(@Body() data: CreateTaskDto, @Req() req: IGetUserAuthInfoRequest) {
     const userId = req.user.userId;
+    const payload = {
+      title: data.title,
+      description: data.description,
+      column: { connect: { id: data.columnId } },
+      position: data.position,
+    };
 
-    return this.taskService.create(
-      {
-        title: data.title,
-        description: data.description,
-        column: { connect: { id: data.columnId } },
-        position: data.position,
-      },
-      userId,
-    );
+    return this.taskService.create(payload, userId);
   }
 
   @Get()
@@ -59,7 +54,8 @@ export class TaskController {
     return this.taskService.findAll(req.user.userId);
   }
 
-  @UseGuards(TaskOwnerGuard)
+  @UseGuards(OwnerGuard)
+  @ResourceType('task')
   @Get(':id')
   @ApiOkResponse({
     description: 'Task found',
@@ -70,13 +66,11 @@ export class TaskController {
   })
   async findOne(@Param('id') id: string) {
     const task = await this.taskService.findOne(id);
-    if (!task) {
-      throw new NotFoundException(`Task with id ${id} not found`);
-    }
     return task;
   }
 
-  @UseGuards(TaskOwnerGuard)
+  @UseGuards(OwnerGuard)
+  @ResourceType('task')
   @Patch(':id')
   @ApiOkResponse({
     description: 'Task updated',
@@ -90,11 +84,6 @@ export class TaskController {
     @Param('id') id: string,
     @Body(new ValidationPipe({ whitelist: true })) data: UpdateTaskDto,
   ) {
-    const task = await this.taskService.findOne(id);
-    if (!task) {
-      throw new NotFoundException(`Task with id ${id} not found`);
-    }
-
     const updateData = {
       ...(data.title && { title: data.title }),
       ...(data.description && { description: data.description }),
@@ -105,15 +94,13 @@ export class TaskController {
     return this.taskService.update(id, updateData);
   }
 
-  @UseGuards(TaskOwnerGuard)
+  @UseGuards(OwnerGuard)
+  @ResourceType('task')
   @Delete(':id')
   @ApiOkResponse({ description: 'Task deleted successfully' })
   @ApiNotFoundResponse({ description: 'Task not found' })
   async remove(@Param('id') id: string) {
-    const task = await this.taskService.findOne(id);
-    if (!task) {
-      throw new NotFoundException(`Task with id ${id} not found`);
-    }
-    return this.taskService.remove(id);
+    await this.taskService.remove(id);
+    return { message: 'Task deleted successfully' };
   }
 }

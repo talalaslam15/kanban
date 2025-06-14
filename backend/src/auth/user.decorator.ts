@@ -6,6 +6,11 @@ export interface IGetUserAuthInfoRequest extends Request {
     email?: string;
   };
 }
+export type OwnerRequest = IGetUserAuthInfoRequest & {
+  params: {
+    id: string;
+  };
+};
 
 export const User = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext) => {
