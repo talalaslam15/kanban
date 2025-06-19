@@ -30,7 +30,6 @@ import { OwnerGuard, ResourceType } from 'src/guards/owner-guard';
 @Controller('tasks')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
-
   @Post()
   create(@Body() data: CreateTaskDto, @Req() req: IGetUserAuthInfoRequest) {
     const userId = req.user.userId;
@@ -39,6 +38,7 @@ export class TaskController {
       description: data.description,
       column: { connect: { id: data.columnId } },
       position: data.position,
+      priority: data.priority,
     };
 
     return this.taskService.create(payload, userId);
@@ -68,7 +68,6 @@ export class TaskController {
     const task = await this.taskService.findOne(id);
     return task;
   }
-
   @UseGuards(OwnerGuard)
   @ResourceType('task')
   @Patch(':id')
@@ -89,6 +88,7 @@ export class TaskController {
       ...(data.description && { description: data.description }),
       ...(data.columnId && { column: { connect: { id: data.columnId } } }),
       ...(data.position !== undefined && { position: data.position }),
+      ...(data.priority !== undefined && { priority: data.priority }),
     };
 
     return this.taskService.update(id, updateData);

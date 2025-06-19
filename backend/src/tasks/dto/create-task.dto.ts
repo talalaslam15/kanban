@@ -1,5 +1,12 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+
+export enum TaskPriorityEnum {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  URGENT = 'urgent',
+}
 
 export class CreateTaskDto {
   @ApiProperty({ example: 'Fix bug', description: 'Title of the task' })
@@ -15,11 +22,6 @@ export class CreateTaskDto {
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ example: 'todo', required: false })
-  @IsString()
-  @IsOptional()
-  status?: string;
-
   @ApiProperty({ example: '1', description: 'ID of the column' })
   @IsString()
   @IsNotEmpty()
@@ -31,5 +33,14 @@ export class CreateTaskDto {
   })
   @IsNotEmpty()
   position: number;
-  // Add any other properties you need for the task creation
+
+  @ApiProperty({
+    enum: TaskPriorityEnum,
+    example: TaskPriorityEnum.MEDIUM,
+    description: 'Priority of the task',
+    default: TaskPriorityEnum.MEDIUM,
+  })
+  @IsEnum(TaskPriorityEnum)
+  @IsOptional()
+  priority?: TaskPriorityEnum;
 }
