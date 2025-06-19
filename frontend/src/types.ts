@@ -28,6 +28,7 @@ export interface Card {
   position: number;
   columnId: string;
   dueDate?: Date | null;
+  priority: TaskPriority;
   assigneeId?: string | null;
 }
 
@@ -46,3 +47,5 @@ export type CardState =
       type: "is-dragging-over";
       closestEdge: Edge | null;
     };
+
+type TaskPriority = "low" | "medium" | "high" | "urgent";
