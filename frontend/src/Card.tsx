@@ -15,6 +15,7 @@ import { deleteTask, updateTask } from "./api/tasks.api";
 import { Button } from "./components/ui/button";
 import { Trash2 } from "lucide-react";
 import { CardDialog } from "./CardDialog";
+import { Badge } from "./components/ui/badge";
 
 const privateCardSymbol = Symbol("Card");
 
@@ -280,9 +281,23 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
     setEditDialogOpen(true);
   };
 
+  const getVariant = (priority: Card["priority"]) => {
+    switch (priority) {
+      case "urgent":
+        return "destructive";
+      case "high":
+        return "warning";
+      case "medium":
+        return "secondary";
+      case "low":
+        return "success";
+      default:
+        return "outline";
+    }
+  };
+
   return (
     <div className="relative">
-      {" "}
       <div
         ref={ref}
         onClick={handleCardClick}
@@ -302,13 +317,10 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
         </div>
         <p className="text-muted-foreground text-sm">{card.description}</p>
         {/* Card footer with labels/actions */}
-        <div className="mt-3 flex items-center justify-between">
-          <div className="flex gap-1">
-            <span className="w-2 h-2 rounded-full bg-primary"></span>
-            <span className="w-2 h-2 rounded-full bg-secondary"></span>
-          </div>
+        <div>
+          <Badge variant={getVariant(card.priority)}>{card.priority}</Badge>
         </div>
-      </div>{" "}
+      </div>
       {/* Drop indicator for dragging over */}
       {state.type === "is-dragging-over" && state.closestEdge ? (
         <DropIndicator edge={state.closestEdge} gap="12px" />
