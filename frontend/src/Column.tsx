@@ -21,16 +21,16 @@ import {
   DialogFooter,
 } from "./components/ui/dialog";
 import { Button } from "./components/ui/button";
-import api from "./auth/api";
-import { updateTask } from "./api/tasks.api";
+import { createTask, updateTask } from "./api/tasks.api";
 import { updateColumn, deleteColumn } from "./api/columns.api";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "./components/ui/popover";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Plus } from "lucide-react";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { CardDialog } from "./CardDialog";
 
 function isCardData(data: unknown): data is { card: Card; listId: string } {
   if (typeof data !== "object" || data === null) {
@@ -85,10 +85,6 @@ export const Column = ({ list, setLists }: P) => {
   const [state, setState] = React.useState<CardState>(idle);
   const [isDragging, setIsDragging] = React.useState(false);
   const [open, setOpen] = React.useState(false);
-  const [form, setForm] = React.useState({
-    title: "",
-    description: "",
-  });
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState("");
   const [editOpen, setEditOpen] = React.useState(false);
@@ -289,53 +285,6 @@ export const Column = ({ list, setLists }: P) => {
     );
   }, [list, setLists]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleAddCard = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError("");
-    try {
-      const payload = {
-        title: form.title,
-        description: form.description,
-        columnId: list.id,
-        position: list.tasks.length,
-      };
-      const response = await api.post("/tasks", payload);
-      const newCard = response.data;
-      setLists((prev) =>
-        prev.map((l) =>
-          l.id === list.id ? { ...l, tasks: [...l.tasks, newCard] } : l
-        )
-      );
-      setForm({ title: "", description: "" });
-      setOpen(false);
-    } catch (err) {
-      if (
-        err &&
-        typeof err === "object" &&
-        "response" in err &&
-        err.response &&
-        typeof err.response === "object" &&
-        "data" in err.response &&
-        err.response.data &&
-        typeof err.response.data === "object" &&
-        "message" in err.response.data
-      ) {
-        setError("Failed to add card");
-      } else {
-        setError("Failed to add card");
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   // Edit column name handler
   const handleEditColumn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -479,7 +428,6 @@ export const Column = ({ list, setLists }: P) => {
           </div>
         </div>
       )}
-
       {/* Cards container */}
       <div className="p-3">
         {list.tasks.map((card) => (
@@ -493,76 +441,50 @@ export const Column = ({ list, setLists }: P) => {
       </div>
       {/* Add card button */}
       <div className="p-3 border-t border-border">
-        <Dialog open={open} onOpenChange={setOpen}>
+        <CardDialog
+          open={open}
+          onOpenChange={setOpen}
+          initialValues={{ title: "", description: "" }}
+          onSubmit={async (values) => {
+            setSubmitting(true);
+            setError("");
+            try {
+              const payload = {
+                title: values.title,
+                description: values.description,
+                columnId: list.id,
+                position: list.tasks.length,
+              };
+              const newCard = await createTask(payload);
+              setLists((prev) =>
+                prev.map((l) =>
+                  l.id === list.id ? { ...l, tasks: [...l.tasks, newCard] } : l
+                )
+              );
+              return Promise.resolve();
+            } catch (err) {
+              setError("Failed to add card");
+              return Promise.reject(err);
+            } finally {
+              setSubmitting(false);
+              setOpen(false);
+            }
+          }}
+          title="Add a new card"
+          submitLabel="Add Card"
+          isSubmitting={submitting}
+          error={error}
+        >
           <DialogTrigger asChild>
             <button
               type="button"
               className="w-full py-1.5 cursor-pointer bg-primary text-primary-foreground text-sm hover:bg-accent-foreground hover:text-accent rounded flex items-center justify-center transition-colors duration-200 hover:shadow-sm"
             >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
+              <Plus size={14} className="mr-2" />
               Add a card
             </button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add a new card</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleAddCard} className="space-y-4">
-              <div>
-                <label
-                  className="block text-sm font-medium mb-1"
-                  htmlFor="title"
-                >
-                  Title
-                </label>
-                <input
-                  id="title"
-                  name="title"
-                  type="text"
-                  value={form.title}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 rounded border border-border bg-background text-foreground"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  className="block text-sm font-medium mb-1"
-                  htmlFor="description"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={form.description}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 rounded border border-border bg-background text-foreground"
-                  rows={3}
-                />
-              </div>
-              {error && <div className="text-red-500 text-sm">{error}</div>}
-              <DialogFooter>
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? "Adding..." : "Add Card"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        </CardDialog>
       </div>
       {state.type === "is-dragging-over" && state.closestEdge ? (
         <DropIndicator edge={state.closestEdge} gap="24px" />
