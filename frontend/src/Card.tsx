@@ -11,7 +11,10 @@ import {
 import invariant from "tiny-invariant";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { DropIndicator } from "@atlaskit/pragmatic-drag-and-drop-react-drop-indicator/box";
-import { updateTask } from "./api/tasks.api";
+import { deleteTask, updateTask } from "./api/tasks.api";
+import { Button } from "./components/ui/button";
+import { Trash2 } from "lucide-react";
+import { CardDialog } from "./CardDialog";
 
 const privateCardSymbol = Symbol("Card");
 
@@ -80,6 +83,9 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
   const ref = React.useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = React.useState(false);
   const [state, setState] = React.useState<CardState>(idle);
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [error, setError] = React.useState("");
 
   React.useEffect(() => {
     const element = ref.current;
@@ -223,16 +229,78 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
     );
   }, [card, list, list.id, setLists]);
 
+  const handleDeleteCard = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation(); // Prevent the click from triggering the drag event
+    // Call the API to delete the card
+    deleteTask(card.id).catch((error) => {
+      console.error("Failed to delete task:", error);
+    });
+    setLists((prevLists) =>
+      prevLists.map((l) => ({
+        ...l,
+        tasks: l.tasks.filter((t) => t.id !== card.id),
+      }))
+    );
+  };
+
+  const handleEditCard = async (values: {
+    title: string;
+    description: string;
+  }) => {
+    setIsSubmitting(true);
+    setError("");
+    try {
+      // Call API to update the card
+      await updateTask(card.id, {
+        title: values.title,
+        description: values.description,
+      });
+
+      // Update local state
+      setLists((prevLists) =>
+        prevLists.map((l) => ({
+          ...l,
+          tasks: l.tasks.map((t) =>
+            t.id === card.id
+              ? { ...t, title: values.title, description: values.description }
+              : t
+          ),
+        }))
+      );
+      setEditDialogOpen(false);
+    } catch (err) {
+      setError("Failed to update card");
+      console.error("Failed to update card:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCardClick = () => {
+    setEditDialogOpen(true);
+  };
+
   return (
     <div className="relative">
+      {" "}
       <div
         ref={ref}
-        className={`bg-card text-card-foreground border border-border rounded-lg p-3 mb-3 shadow cursor-grab hover:shadow-md transition-colors duration-300
+        onClick={handleCardClick}
+        className={`group bg-card text-card-foreground border border-border rounded-lg p-3 mb-3 shadow cursor-grab hover:shadow-md transition-colors duration-300
           ${isDragging ? "opacity-50" : ""}`}
       >
-        <h3 className="font-medium mb-2 text-foreground">{card.title}</h3>
+        <div className="flex justify-between items-start">
+          <h3 className="font-medium mb-2 text-foreground">{card.title}</h3>{" "}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-full hover:bg-warning cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={handleDeleteCard}
+          >
+            <Trash2 className="h-4 w-4 text-red-400 hover:text-warning transition-colors" />
+          </Button>
+        </div>
         <p className="text-muted-foreground text-sm">{card.description}</p>
-
         {/* Card footer with labels/actions */}
         <div className="mt-3 flex items-center justify-between">
           <div className="flex gap-1">
@@ -240,11 +308,22 @@ export const CardComponent = ({ card, list, setLists }: CardProps) => {
             <span className="w-2 h-2 rounded-full bg-secondary"></span>
           </div>
         </div>
-      </div>
+      </div>{" "}
       {/* Drop indicator for dragging over */}
       {state.type === "is-dragging-over" && state.closestEdge ? (
         <DropIndicator edge={state.closestEdge} gap="12px" />
       ) : null}
+      {/* Edit Card Dialog */}
+      <CardDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        initialValues={card}
+        onSubmit={handleEditCard}
+        title="Edit Card"
+        submitLabel="Save Changes"
+        isSubmitting={isSubmitting}
+        error={error}
+      />
     </div>
   );
 };
