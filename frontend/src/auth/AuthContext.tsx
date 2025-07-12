@@ -4,7 +4,6 @@ import { User } from "../types";
 import { useNavigate } from "react-router";
 
 const authPages = ["/login", "/register"];
-const isAuthPage = authPages.includes(window.location.pathname);
 
 // Shape of our auth state
 interface AuthState {
@@ -41,30 +40,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
-      if (!token && !isAuthPage) {
-        setAuthState((prev) => ({ ...prev, loading: false }));
-        navigate("/login");
+      const isAuthPage = authPages.includes(window.location.pathname);
+
+      // Case 1: No token
+      if (!token) {
+        setAuthState((prev) => ({
+          ...prev,
+          isAuthenticated: false,
+          user: null,
+          loading: false,
+        }));
+
+        // Redirect to login only if not already on auth pages
+        if (!isAuthPage) {
+          navigate("/login");
+        }
         return;
       }
+
+      // Case 2: Has token but on auth pages -> redirect to dashboard
+      if (token && isAuthPage) {
+        // Don't make API call, just redirect since we have a token
+        setAuthState((prev) => ({
+          ...prev,
+          isAuthenticated: true,
+          token,
+          loading: false,
+        }));
+        navigate("/");
+        return;
+      }
+
+      // Case 3: Has token and not on auth pages -> validate token with API
       try {
         const response = await api.get("/auth/me");
         const user = response.data;
-        setAuthState((prev) => ({
-          ...prev,
+        setAuthState({
           isAuthenticated: true,
           user,
           token,
           loading: false,
-        }));
-        // If user is on an auth page (login/register) and already authenticated, redirect to home
-        if (isAuthPage) {
-          navigate("/");
-        }
-      } catch {
-        console.error("Authentication check failed");
+        });
+      } catch (error) {
+        console.error("Token validation failed:", error);
+        // navigation logic is handled in the next useEffect
       }
     };
+
     checkAuth();
+  }, [navigate]);
+
+  // Listen for logout events from API interceptor
+  useEffect(() => {
+    const handleLogout = () => {
+      setAuthState({
+        isAuthenticated: false,
+        token: null,
+        user: null,
+        loading: false,
+      });
+      navigate("/login");
+    };
+
+    // triggered by axios interceptor in api.ts file to handle logout
+    window.addEventListener("auth:logout", handleLogout);
+    return () => window.removeEventListener("auth:logout", handleLogout);
   }, [navigate]);
 
   // Login function
