@@ -11,7 +11,7 @@ A full-stack Kanban board application built with modern web technologies. This m
 - **Vite** - Fast build tool and dev server
 - **TailwindCSS** - Utility-first CSS framework
 - **Radix UI** - Accessible component primitives
-- **Atlaskit** - pragmatic-drag-and-drop library for DnD by Atlassion
+- **Atlaskit** - pragmatic-drag-and-drop library for DnD by Atlassian
 - **TanStack Query** - Data fetching and caching
 - **React Router** - Client-side routing
 - **Axios** - HTTP client
