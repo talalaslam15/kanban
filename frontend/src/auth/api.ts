@@ -27,10 +27,8 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      // Use a redirect to /login. This works outside React components.
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
+      // Dispatch a custom event that AuthContext can listen to
+      window.dispatchEvent(new CustomEvent("auth:logout"));
     }
     return Promise.reject(error);
   }
